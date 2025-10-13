@@ -63,14 +63,27 @@
       color: #fff;
       font-weight: bold;
     }
+    #refresh-time {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 14px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
 
   <h2>Watchlist Dashboard</h2>
+  <div id="refresh-time"></div>
   <table id="data-table"></table>
 
   <script>
+    // Show last refresh time
+    const refreshTime = new Date();
+    document.getElementById('refresh-time').textContent =
+      'Last refresh: ' + refreshTime.toLocaleString();
+
     fetch('watchlist.csv')
       .then(response => response.text())
       .then(csv => {
@@ -151,7 +164,7 @@
                 td.style.fontWeight = 'bold';
               }
 
-              // ULTIMATE_ENTRY_PRICE gradient + bold
+              // ULTIMATE_ENTRY_PRICE gradient + bold + yellow for mild positive
               if (key === 'ULTIMATE_ENTRY_PRICE') {
                 if (percent < 0) {
                   let bgColor = '';
@@ -167,8 +180,12 @@
                   td.style.backgroundColor = bgColor;
                   td.style.color = '#000';
                   td.style.fontWeight = 'bold';
-                } else if (percent > 0) {
-                  td.style.backgroundColor = '#ffffff';
+                } else if (percent >= 0 && percent <= 1.5) {
+                  td.style.backgroundColor = '#ffff99'; // yellow
+                  td.style.color = '#000';
+                  td.style.fontWeight = 'bold';
+                } else if (percent > 1.5) {
+                  td.style.backgroundColor = '#ffffff'; // white
                   td.style.color = '#000';
                 }
               }
