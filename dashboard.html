@@ -11,6 +11,7 @@
     th { background-color: #333; color: white; }
     .highlight-row { background-color: yellow; font-weight: bold; }
     .light-blue { background-color: #e0f7ff; }
+    .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
   </style>
 </head>
@@ -37,7 +38,16 @@
           return;
         }
 
-        const columns = Object.keys(data[0]);
+        let columns = Object.keys(data[0]);
+
+        // Flip PRICE_FLOOR and PRICE_CEILING
+        const floorIndex = columns.indexOf('PRICE_FLOOR');
+        const ceilingIndex = columns.indexOf('PRICE_CEILING');
+        if (floorIndex !== -1 && ceilingIndex !== -1) {
+          const temp = columns[floorIndex];
+          columns[floorIndex] = columns[ceilingIndex];
+          columns[ceilingIndex] = temp;
+        }
 
         const oiVolCols = [
           'GEX_OI_VOL_AVG',
@@ -48,6 +58,13 @@
 
         const oiCols = [
           'GEX_OI_AVG',
+          'ZONE_OI_AVG',
+          'POWER_OI_AVG',
+          'NEG_NEG_OI_AVG'
+        ];
+
+        const exOiCols = [
+          'EX_OI_AVG',
           'ZONE_OI_AVG',
           'POWER_OI_AVG',
           'NEG_NEG_OI_AVG'
@@ -99,8 +116,9 @@
 
         data.forEach(row => {
           const tr = document.createElement('tr');
+          const isYellow = row['CURR'] === 'CURR';
 
-          if (row['CURR'] === 'CURR') {
+          if (isYellow) {
             tr.classList.add('highlight-row');
           }
 
@@ -109,21 +127,25 @@
             const value = row[key];
             td.textContent = value;
 
-            if (lightBlueCols.includes(key)) {
-              td.classList.add('light-blue');
-            }
+            if (!isYellow) {
+              if (lightBlueCols.includes(key)) {
+                td.classList.add('light-blue');
+              }
 
-            if (key === 'STRIKE') {
-              td.classList.add('strike-blue');
-            }
+              if (exOiCols.includes(key)) {
+                td.classList.add('light-gray');
+              }
 
-            tr.appendChild(td);
-          });
+              if (key === 'STRIKE') {
+                td.classList.add('strike-blue');
+              }
 
-          table.appendChild(tr);
-        });
-      });
-  </script>
+              // Highlight M, M+, M- in ZONE_OI_VOL_AVG
+              if (key === 'ZONE_OI_VOL_AVG' && ['M', 'M+', 'M-'].includes(value.trim())) {
+                td.style.backgroundColor = 'yellow';
+                td.style.color = 'black';
+                td.style.fontWeight = 'bold';
+              }
 
-</body>
-</html>
+              // Symbol-based styling
+              if (value.trim()
