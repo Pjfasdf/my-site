@@ -161,4 +161,34 @@
                 td.style.color = 'red';
                 td.style.fontWeight = 'bold';
               } else if (value.trim() === '-') {
-                td.style
+                td.style.backgroundColor = 'red';
+                td.style.color = 'green';
+                td.style.fontWeight = 'bold';
+              }
+
+              // Fallback: medium purple for OI+VOL_0 columns if no other style applied
+              if (oiVolCols_0.includes(key)) {
+                const alreadyStyled =
+                  td.style.backgroundColor ||
+                  td.classList.contains('light-blue') ||
+                  td.classList.contains('light-gray') ||
+                  td.classList.contains('strike-blue');
+
+                if (!alreadyStyled) {
+                  td.style.backgroundColor = 'mediumpurple';
+                  td.style.color = 'white';
+                }
+              }
+            }
+
+            tr.appendChild(td);
+          });
+
+          table.appendChild(tr);
+        });
+      });
+  </script>
+
+</body>
+</html>
+
