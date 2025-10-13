@@ -52,11 +52,11 @@
 
         const oiVolCols = ['GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG', 'NEG_NEG_OI_VOL_AVG'];
         const oiCols = ['GEX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG'];
-        const oiVolCols0 = ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0'];
-        const oiCols0 = ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0'];
-        const exOiCols = ['EX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG', 'GEX_OI_AVG', ...oiCols0];
-        const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolCols];
+        const oiVolColsAvg0 = ['GEX_OI_VOL_AVG0', 'ZONE_OI_VOL_AVG0', 'POWER_OI_VOL_AVG0', 'NEG_NEG_OI_VOL_AVG0'];
+        const oiColsAvg0 = ['GEX_OI_AVG0', 'ZONE_OI_AVG0', 'POWER_OI_AVG0', 'NEG_NEG_OI_AVG0'];
         const zoneHighlightCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_0'];
+        const exOiCols = ['EX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG', 'GEX_OI_AVG', ...oiColsAvg0];
+        const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolCols];
 
         // First header row (grouped headers)
         const groupHeaderRow = document.createElement('tr');
@@ -79,18 +79,18 @@
               th.style.color = 'white';
               groupHeaderRow.appendChild(th);
             }
-          } else if (oiVolCols0.includes(col)) {
-            if (col === oiVolCols0[0]) {
+          } else if (oiVolColsAvg0.includes(col)) {
+            if (col === oiVolColsAvg0[0]) {
               th.textContent = 'OI+VOL';
-              th.colSpan = oiVolCols0.length;
+              th.colSpan = oiVolColsAvg0.length;
               th.style.backgroundColor = '#555';
               th.style.color = 'white';
               groupHeaderRow.appendChild(th);
             }
-          } else if (oiCols0.includes(col)) {
-            if (col === oiCols0[0]) {
+          } else if (oiColsAvg0.includes(col)) {
+            if (col === oiColsAvg0[0]) {
               th.textContent = 'OI';
-              th.colSpan = oiCols0.length;
+              th.colSpan = oiColsAvg0.length;
               th.style.backgroundColor = '#555';
               th.style.color = 'white';
               groupHeaderRow.appendChild(th);
@@ -126,14 +126,12 @@
               if (exOiCols.includes(key)) td.classList.add('light-gray');
               if (key === 'STRIKE') td.classList.add('strike-blue');
 
-              // Highlight M, M+, M- in ZONE_OI_VOL columns
               if (zoneHighlightCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
                 td.style.backgroundColor = 'yellow';
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
               }
 
-              // Symbol-based styling
               if (value.trim() === '*') {
                 td.style.backgroundColor = '#00bfff';
                 td.style.fontWeight = 'bold';
