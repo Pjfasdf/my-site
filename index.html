@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="30">
   <title>Watchlist Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
@@ -38,6 +39,15 @@
       background-color: #cce5ff;
       color: #004085;
     }
+    .entry-good {
+      background-color: #d4edda;
+      color: #155724;
+      font-weight: bold;
+    }
+    .target-blue {
+      background-color: #cce5ff;
+      color: #004085;
+    }
   </style>
 </head>
 <body>
@@ -70,36 +80,41 @@
         // Create rows
         data.forEach(row => {
           const tr = document.createElement('tr');
-Object.entries(row).forEach(([key, value]) => {
-  const td = document.createElement('td');
-  td.textContent = value;
+          Object.entries(row).forEach(([key, value]) => {
+            const td = document.createElement('td');
+            td.textContent = value;
 
-  // Highlight Ticker column if value matches
-  if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(value.trim().toUpperCase())) {
-    td.classList.add('highlight-ticker');
-  }
+            // Highlight Ticker column
+            if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(value.trim().toUpperCase())) {
+              td.classList.add('highlight-ticker');
+            }
 
-  // Apply green background for specific Entry Signal
-  if (key === 'ENTRY_SIGNAL' && value.trim() === 'Under Ult Entry | GOOD profit') {
-    td.classList.add('entry-good');
-  }
+            // Highlight Entry Signal
+            if (key === 'ENTRY_SIGNAL' && value.trim() === 'Under Ult Entry | GOOD profit') {
+              td.classList.add('entry-good');
+            }
 
-  // Apply background color based on percentage
-  const match = value.match(/([-+]?\d+(\.\d+)?)%/);
-  if (match) {
-    const percent = parseFloat(match[1]);
-    if (percent > 0) td.classList.add('positive');
-    else if (percent < 0) td.classList.add('negative');
-    else td.classList.add('neutral');
+            // Highlight Target Price column
+            if (key === 'TARGET_PRICE') {
+              td.classList.add('target-blue');
+            }
 
-    // Make Target Price bold if > 2%
-    if (key === 'TARGET_PRICE' && percent > 2) {
-      td.style.fontWeight = 'bold';
-    }
-  }
+            // Apply background color based on percentage
+            const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+            if (match) {
+              const percent = parseFloat(match[1]);
+              if (percent > 0) td.classList.add('positive');
+              else if (percent < 0) td.classList.add('negative');
+              else td.classList.add('neutral');
 
-  tr.appendChild(td);
-});
+              // Make Target Price bold if > 2%
+              if (key === 'TARGET_PRICE' && percent > 2) {
+                td.style.fontWeight = 'bold';
+              }
+            }
+
+            tr.appendChild(td);
+          });
           table.appendChild(tr);
         });
       });
