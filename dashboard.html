@@ -37,6 +37,57 @@
         }
 
         const columns = Object.keys(data[0]);
+
+        const oiVolCols = [
+          'GEX_OI_VOL_AVG',
+          'ZONE_OI_VOL_AVG',
+          'POWER_OI_VOL_AVG',
+          'NEG_NEG_OI_VOL_AVG'
+        ];
+
+        const oiCols = [
+          'GEX_OI_AVG',
+          'ZONE_OI_AVG',
+          'POWER_OI_AVG',
+          'NEG_NEG_OI_AVG'
+        ];
+
+        const lightBlueCols = [
+          'DTE_STRING_AVG',
+          'DEX_AVG',
+          ...oiVolCols,
+          ...oiCols
+        ];
+
+        // First header row (grouped headers)
+        const groupHeaderRow = document.createElement('tr');
+        columns.forEach(col => {
+          const th = document.createElement('th');
+
+          if (oiVolCols.includes(col)) {
+            if (col === oiVolCols[0]) {
+              th.textContent = 'OI+VOL';
+              th.colSpan = oiVolCols.length;
+              th.style.backgroundColor = '#555';
+              th.style.color = 'white';
+              groupHeaderRow.appendChild(th);
+            }
+          } else if (oiCols.includes(col)) {
+            if (col === oiCols[0]) {
+              th.textContent = 'OI';
+              th.colSpan = oiCols.length;
+              th.style.backgroundColor = '#555';
+              th.style.color = 'white';
+              groupHeaderRow.appendChild(th);
+            }
+          } else {
+            th.textContent = '';
+            groupHeaderRow.appendChild(th);
+          }
+        });
+        table.appendChild(groupHeaderRow);
+
+        // Second header row (actual column names)
         const headerRow = document.createElement('tr');
         columns.forEach(col => {
           const th = document.createElement('th');
@@ -45,24 +96,19 @@
         });
         table.appendChild(headerRow);
 
-        const startIndex = columns.indexOf('DTE_AVG');
-        const endIndex = columns.indexOf('DTE_AVG-0');
-
         data.forEach(row => {
           const tr = document.createElement('tr');
 
-          // Highlight entire row if CURR column equals "CURR"
           if (row['CURR'] === 'CURR') {
             tr.classList.add('highlight-row');
           }
 
-          columns.forEach((key, i) => {
+          columns.forEach(key => {
             const td = document.createElement('td');
             const value = row[key];
             td.textContent = value;
 
-            // Highlight columns from DTE_AVG to just before DTE_AVG-0
-            if (i >= startIndex && i < endIndex) {
+            if (lightBlueCols.includes(key)) {
               td.classList.add('light-blue');
             }
 
