@@ -61,6 +61,7 @@
 
         const zoneVolCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_0'];
         const zoneOiCols = ['ZONE_OI_AVG', 'ZONE_OI_AVG0', 'ZONE_OI_0'];
+        const zoneCols = [...zoneVolCols, ...zoneOiCols];
         const negNegOiCols = [
           'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0',
           'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0',
@@ -76,6 +77,12 @@
           'POWER_OI_VOL_AVG', 'POWER_OI_AVG',
           'POWER_OI_VOL_AVG0', 'POWER_OI_AVG0',
           'POWER_OI_VOL_0', 'POWER_OI_0'
+        ];
+        const zeroAsEmptyCols = [
+          'NUMBER_OF_1_TOTAL_AVG',
+          'NUMBER_OF_1_TOTAL_AVG_0',
+          'NUMBER_OF_M_TOTAL_AVG',
+          'NUMBER_OF_M_TOTAL_AVG_0'
         ];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
@@ -137,10 +144,18 @@
             const value = row[key];
             td.textContent = value;
 
+            if (zeroAsEmptyCols.includes(key) && parseFloat(value) === 0) {
+              td.textContent = '';
+            }
+
             if (lightBlueCols.includes(key)) td.classList.add('light-blue');
             if (lightGrayCols.includes(key)) td.classList.add('light-gray');
             if (strikeCols.includes(key)) td.classList.add('strike-blue');
 
+            if (zoneCols.includes(key)) {
+              td.style.fontSize = '16px';
+              td.style.fontWeight = 'bold';
+            }
             if (zoneVolCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
               td.style.backgroundColor = 'yellow';
               td.style.color = 'black';
@@ -206,18 +221,18 @@
               }
             }
 
-if (powerOiCols.includes(key)) {
-  const num = parseFloat(value);
-  if (!isNaN(num) && num >= 2 && num <= 5) {
-    const lightness = 40 + ((num - 2) / 3) * 50; // 40% at 2, 90% at 5
-    td.style.backgroundColor = `hsl(220, 100%, ${lightness}%)`;
-    td.style.color = 'black';
-  } else if (num === 1) {
-    td.style.backgroundColor = 'red';
-    td.style.color = 'white';
-    td.style.fontWeight = 'bold';
-  }
-}
+            if (powerOiCols.includes(key)) {
+              const num = parseFloat(value);
+              if (!isNaN(num) && num >= 2 && num <= 5) {
+                const lightness = 40 + ((num - 2) / 3) * 50; // 2 → 40%, 5 → 90%
+                td.style.backgroundColor = `hsl(220, 100%, ${lightness}%)`;
+                td.style.color = 'black';
+              } else if (num === 1) {
+                td.style.backgroundColor = 'red';
+                td.style.color = 'white';
+                td.style.fontWeight = 'bold';
+              }
+            }
 
             tr.appendChild(td);
           });
@@ -229,5 +244,3 @@ if (powerOiCols.includes(key)) {
 
 </body>
 </html>
-
-
