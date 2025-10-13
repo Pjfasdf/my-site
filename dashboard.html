@@ -12,6 +12,7 @@
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
+    .curr-border-row { outline: 3px solid yellow; outline-offset: -1px; }
   </style>
 </head>
 <body>
@@ -84,6 +85,9 @@
           'NUMBER_OF_M_TOTAL_AVG',
           'NUMBER_OF_M_TOTAL_AVG_0'
         ];
+        const darkerBlueCols = ['DTE_STRING_AVG', 'DEX_AVG'];
+        const grayCols = ['DTE_STRING_AVG0', 'DEX_AVG0'];
+        const purpleCols = ['DTE_STRING_0', 'DEX_0'];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
@@ -97,8 +101,7 @@
         powerOiCols.forEach(col => {
           maxPowerOi[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
         });
-
-        const groupHeaderRow = document.createElement('tr');
+                const groupHeaderRow = document.createElement('tr');
         let i = 0;
         while (i < columns.length) {
           const col = columns[i];
@@ -138,6 +141,9 @@
 
         data.forEach(row => {
           const tr = document.createElement('tr');
+          if (row['CURR'] === 'CURR') {
+            tr.classList.add('curr-border-row');
+          }
 
           columns.forEach(key => {
             const td = document.createElement('td');
@@ -152,10 +158,26 @@
             if (lightGrayCols.includes(key)) td.classList.add('light-gray');
             if (strikeCols.includes(key)) td.classList.add('strike-blue');
 
+            if (darkerBlueCols.includes(key)) {
+              td.style.backgroundColor = '#90caf9';
+              td.style.color = 'black';
+            }
+
+            if (grayCols.includes(key)) {
+              td.style.backgroundColor = '#d3d3d3';
+              td.style.color = 'black';
+            }
+
+            if (purpleCols.includes(key)) {
+              td.style.backgroundColor = '#d1c4e9';
+              td.style.color = 'black';
+            }
+
             if (zoneCols.includes(key)) {
               td.style.fontSize = '16px';
               td.style.fontWeight = 'bold';
             }
+
             if (zoneVolCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
               td.style.backgroundColor = 'yellow';
               td.style.color = 'black';
@@ -210,12 +232,12 @@
               const num = parseFloat(value);
               const max = maxValues[key];
               if (!isNaN(num) && max > 0) {
-                td.innerHTML = ''; // Clear default text
+                td.innerHTML = '';
                 const bar = document.createElement('div');
                 bar.style.height = '12px';
                 bar.style.width = `${(Math.abs(num) / max) * 100}%`;
                 bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
-                bar.style.margin = '0 auto 0 0'; // Align left
+                bar.style.margin = '0 auto 0 0';
                 bar.style.borderRadius = '2px';
                 td.appendChild(bar);
               }
@@ -224,7 +246,7 @@
             if (powerOiCols.includes(key)) {
               const num = parseFloat(value);
               if (!isNaN(num) && num >= 2 && num <= 5) {
-                const lightness = 40 + ((num - 2) / 3) * 50; // 2 → 40%, 5 → 90%
+                const lightness = 40 + ((num - 2) / 3) * 50;
                 td.style.backgroundColor = `hsl(220, 100%, ${lightness}%)`;
                 td.style.color = 'black';
               } else if (num === 1) {
