@@ -7,7 +7,7 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     table { border-collapse: collapse; width: 100%; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
     th { background-color: #333; color: white; }
     .highlight-row { background-color: yellow; font-weight: bold; }
     .highlight-row td { border: 2px solid yellow !important; }
@@ -41,7 +41,6 @@
 
         let columns = Object.keys(data[0]);
 
-        // Flip PRICE_FLOOR and PRICE_CEILING
         const floorIndex = columns.indexOf('PRICE_FLOOR');
         const ceilingIndex = columns.indexOf('PRICE_CEILING');
         if (floorIndex !== -1 && ceilingIndex !== -1) {
@@ -70,11 +69,15 @@
           'NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG'
         ];
         const oiVolCols_0 = ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0'];
+        const gexOiBarCols = [
+          'GEX_OI_VOL_AVG', 'GEX_OI_AVG',
+          'GEX_OI_VOL_AVG0', 'GEX_OI_AVG0',
+          'GEX_OI_VOL_0', 'GEX_OI_0'
+        ];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
 
-        // First header row (grouped headers)
         const groupHeaderRow = document.createElement('tr');
         let i = 0;
         while (i < columns.length) {
@@ -105,7 +108,6 @@
         }
         table.appendChild(groupHeaderRow);
 
-        // Second header row (actual column names)
         const headerRow = document.createElement('tr');
         columns.forEach(col => {
           const th = document.createElement('th');
@@ -166,7 +168,6 @@
                 td.style.fontWeight = 'bold';
               }
 
-              // Fallback: medium purple for OI+VOL_0 columns if no other style applied
               if (oiVolCols_0.includes(key)) {
                 const alreadyStyled =
                   td.style.backgroundColor ||
@@ -177,6 +178,25 @@
                 if (!alreadyStyled) {
                   td.style.backgroundColor = 'mediumpurple';
                   td.style.color = 'white';
+                }
+              }
+
+              if (gexOiBarCols.includes(key)) {
+                const num = parseFloat(value);
+                if (!isNaN(num)) {
+                  td.innerHTML = '';
+                  const bar = document.createElement('div');
+                  bar.style.height = '10px';
+                  bar.style.width = `${Math.min(Math.abs(num), 100)}%`;
+                  bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
+                  bar.style.margin = '2px auto';
+                  td.appendChild(bar);
+
+                  const label = document.createElement('div');
+                  label.textContent = value;
+                  label.style.fontSize = '12px';
+                  label.style.marginTop = '4px';
+                  td.appendChild(label);
                 }
               }
             }
@@ -191,4 +211,4 @@
 
 </body>
 </html>
-
+                 
