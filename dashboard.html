@@ -281,17 +281,17 @@
               }
             }
 
-            if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
-              const num = parseFloat(value);
-              if (!isNaN(num)) {
-                const abs = Math.min(Math.abs(num), 100);
-                const lightness = 90 - (abs / 100) * 50;
-                const hue = num >= 0 ? 120 : 0;
-                td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
-                td.style.color = 'black';
-                td.textContent = `${num >= 0 ? '+' : '-'}${Math.abs(num).toFixed(2)}`;
-              }
-            }
+if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
+  const num = parseFloat(value);
+  if (!isNaN(num)) {
+    const abs = Math.min(Math.abs(num), 100);
+    const lightness = 90 - (abs / 100) * 50;
+    const hue = num >= 0 ? 120 : 0;
+    td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
+    td.style.color = 'black';
+    td.textContent = num >= 0 ? '+' : '-'; // only show sign
+  }
+}
 
             tr.appendChild(td);
           });
@@ -303,6 +303,7 @@
 
 </body>
 </html>
+
 
 
 
