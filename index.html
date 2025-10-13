@@ -70,26 +70,36 @@
         // Create rows
         data.forEach(row => {
           const tr = document.createElement('tr');
-          Object.entries(row).forEach(([key, value], index) => {
-            const td = document.createElement('td');
-            td.textContent = value;
+Object.entries(row).forEach(([key, value]) => {
+  const td = document.createElement('td');
+  td.textContent = value;
 
-            // Highlight Ticker column if value matches
-            if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(value.trim().toUpperCase())) {
-              td.classList.add('highlight-ticker');
-            }
+  // Highlight Ticker column if value matches
+  if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(value.trim().toUpperCase())) {
+    td.classList.add('highlight-ticker');
+  }
 
-            // Apply background color based on percentage
-            const match = value.match(/([-+]?\d+(\.\d+)?)%/);
-            if (match) {
-              const percent = parseFloat(match[1]);
-              if (percent > 0) td.classList.add('positive');
-              else if (percent < 0) td.classList.add('negative');
-              else td.classList.add('neutral');
-            }
+  // Apply green background for specific Entry Signal
+  if (key === 'ENTRY_SIGNAL' && value.trim() === 'Under Ult Entry | GOOD profit') {
+    td.classList.add('entry-good');
+  }
 
-            tr.appendChild(td);
-          });
+  // Apply background color based on percentage
+  const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+  if (match) {
+    const percent = parseFloat(match[1]);
+    if (percent > 0) td.classList.add('positive');
+    else if (percent < 0) td.classList.add('negative');
+    else td.classList.add('neutral');
+
+    // Make Target Price bold if > 2%
+    if (key === 'TARGET_PRICE' && percent > 2) {
+      td.style.fontWeight = 'bold';
+    }
+  }
+
+  tr.appendChild(td);
+});
           table.appendChild(tr);
         });
       });
