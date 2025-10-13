@@ -62,7 +62,13 @@
           ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0']
         ];
 
-        const zoneHighlightCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_0'];
+        const zoneVolCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_0'];
+        const zoneOiCols = ['ZONE_OI_AVG', 'ZONE_OI_AVG0', 'ZONE_OI_0'];
+        const negNegOiCols = [
+          'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0',
+          'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0',
+          'NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG'
+        ];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
@@ -122,10 +128,28 @@
               if (lightGrayCols.includes(key)) td.classList.add('light-gray');
               if (strikeCols.includes(key)) td.classList.add('strike-blue');
 
-              if (zoneHighlightCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
+              if (zoneVolCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
                 td.style.backgroundColor = 'yellow';
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
+              }
+
+              if (zoneOiCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
+                td.style.backgroundColor = 'black';
+                td.style.color = 'yellow';
+                td.style.fontWeight = 'bold';
+              }
+
+              if (negNegOiCols.includes(key)) {
+                if (!isNaN(parseFloat(value)) && isFinite(value)) {
+                  td.style.backgroundColor = 'limegreen';
+                  td.style.color = 'black';
+                  td.style.fontWeight = 'bold';
+                } else if (value.trim() === 'N/N') {
+                  td.style.backgroundColor = 'red';
+                  td.style.color = 'white';
+                  td.style.fontWeight = 'bold';
+                }
               }
 
               if (value.trim() === '*') {
