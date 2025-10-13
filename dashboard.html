@@ -12,7 +12,11 @@
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
-    .curr-border-row { outline: 3px solid yellow; outline-offset: -1px; }
+    .curr-border-row {
+      outline: 5px solid gold;
+      outline-offset: -2px;
+      box-shadow: 0 0 6px 2px gold;
+    }
   </style>
 </head>
 <body>
@@ -101,7 +105,7 @@
         powerOiCols.forEach(col => {
           maxPowerOi[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
         });
-                const groupHeaderRow = document.createElement('tr');
+        const groupHeaderRow = document.createElement('tr');
         let i = 0;
         while (i < columns.length) {
           const col = columns[i];
@@ -256,6 +260,18 @@
               }
             }
 
+            if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
+              const num = parseFloat(value);
+              if (!isNaN(num)) {
+                const abs = Math.min(Math.abs(num), 100);
+                const lightness = 90 - (abs / 100) * 50;
+                const hue = num >= 0 ? 120 : 0;
+                td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
+                td.style.color = 'black';
+                td.textContent = `${num >= 0 ? '+' : '-'}${Math.abs(num).toFixed(2)}`;
+              }
+            }
+
             tr.appendChild(td);
           });
 
@@ -266,3 +282,4 @@
 
 </body>
 </html>
+            
