@@ -9,8 +9,6 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
     th { background-color: #333; color: white; }
-    .highlight-row { background-color: #fff9c4; font-weight: normal; }
-    .highlight-row td { border: 1px solid #ccc !important; }
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
@@ -74,6 +72,11 @@
           'GEX_OI_VOL_AVG0', 'GEX_OI_AVG0',
           'GEX_OI_VOL_0', 'GEX_OI_0'
         ];
+        const powerOiCols = [
+          'POWER_OI_VOL_AVG', 'POWER_OI_AVG',
+          'POWER_OI_VOL_AVG0', 'POWER_OI_AVG0',
+          'POWER_OI_VOL_0', 'POWER_OI_0'
+        ];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
@@ -81,6 +84,11 @@
         const maxValues = {};
         gexOiBarCols.forEach(col => {
           maxValues[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
+        });
+
+        const maxPowerOi = {};
+        powerOiCols.forEach(col => {
+          maxPowerOi[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
         });
 
         const groupHeaderRow = document.createElement('tr');
@@ -123,81 +131,95 @@
 
         data.forEach(row => {
           const tr = document.createElement('tr');
-          const isYellow = row['CURR'] === 'CURR';
-          if (isYellow) tr.classList.add('highlight-row');
 
           columns.forEach(key => {
             const td = document.createElement('td');
             const value = row[key];
             td.textContent = value;
 
-            if (!isYellow) {
-              if (lightBlueCols.includes(key)) td.classList.add('light-blue');
-              if (lightGrayCols.includes(key)) td.classList.add('light-gray');
-              if (strikeCols.includes(key)) td.classList.add('strike-blue');
+            if (lightBlueCols.includes(key)) td.classList.add('light-blue');
+            if (lightGrayCols.includes(key)) td.classList.add('light-gray');
+            if (strikeCols.includes(key)) td.classList.add('strike-blue');
 
-              if (zoneVolCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
-                td.style.backgroundColor = 'yellow';
+            if (zoneVolCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
+              td.style.backgroundColor = 'yellow';
+              td.style.color = 'black';
+              td.style.fontWeight = 'bold';
+            }
+
+            if (zoneOiCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
+              td.style.backgroundColor = 'black';
+              td.style.color = 'yellow';
+              td.style.fontWeight = 'bold';
+            }
+
+            if (negNegOiCols.includes(key)) {
+              if (!isNaN(parseFloat(value)) && isFinite(value)) {
+                td.style.backgroundColor = 'limegreen';
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
-              }
-
-              if (zoneOiCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
-                td.style.backgroundColor = 'black';
-                td.style.color = 'yellow';
+              } else if (value.trim() === 'N/N') {
+                td.style.backgroundColor = 'red';
+                td.style.color = 'white';
                 td.style.fontWeight = 'bold';
               }
+            }
 
-              if (negNegOiCols.includes(key)) {
-                if (!isNaN(parseFloat(value)) && isFinite(value)) {
-                  td.style.backgroundColor = 'limegreen';
-                  td.style.color = 'black';
-                  td.style.fontWeight = 'bold';
-                } else if (value.trim() === 'N/N') {
+            if (value.trim() === '*') {
+              td.style.backgroundColor = '#00bfff';
+              td.style.fontWeight = 'bold';
+            } else if (value.trim() === '+') {
+              td.style.backgroundColor = 'green';
+              td.style.color = 'red';
+              td.style.fontWeight = 'bold';
+            } else if (value.trim() === '-') {
+              td.style.backgroundColor = 'red';
+              td.style.color = 'green';
+              td.style.fontWeight = 'bold';
+            }
+
+            if (oiVolCols_0.includes(key)) {
+              const alreadyStyled =
+                td.style.backgroundColor ||
+                td.classList.contains('light-blue') ||
+                td.classList.contains('light-gray') ||
+                td.classList.contains('strike-blue');
+
+              if (!alreadyStyled) {
+                td.style.backgroundColor = 'mediumpurple';
+                td.style.color = 'white';
+              }
+            }
+
+            if (gexOiBarCols.includes(key)) {
+              const num = parseFloat(value);
+              const max = maxValues[key];
+              if (!isNaN(num) && max > 0) {
+                td.innerHTML = ''; // Clear default text
+                const bar = document.createElement('div');
+                bar.style.height = '12px';
+                bar.style.width = `${(Math.abs(num) / max) * 100}%`;
+                bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
+                bar.style.margin = '0 auto 0 0'; // Align left
+                bar.style.borderRadius = '2px';
+                td.appendChild(bar);
+              }
+            }
+
+            if (powerOiCols.includes(key)) {
+              const num = parseFloat(value);
+              const max = maxPowerOi[key];
+              if (!isNaN(num) && max > 0) {
+                if (num === 1) {
                   td.style.backgroundColor = 'red';
                   td.style.color = 'white';
                   td.style.fontWeight = 'bold';
-                }
-              }
-
-              if (value.trim() === '*') {
-                td.style.backgroundColor = '#00bfff';
-                td.style.fontWeight = 'bold';
-              } else if (value.trim() === '+') {
-                td.style.backgroundColor = 'green';
-                td.style.color = 'red';
-                td.style.fontWeight = 'bold';
-              } else if (value.trim() === '-') {
-                td.style.backgroundColor = 'red';
-                td.style.color = 'green';
-                td.style.fontWeight = 'bold';
-              }
-
-              if (oiVolCols_0.includes(key)) {
-                const alreadyStyled =
-                  td.style.backgroundColor ||
-                  td.classList.contains('light-blue') ||
-                  td.classList.contains('light-gray') ||
-                  td.classList.contains('strike-blue');
-
-                if (!alreadyStyled) {
-                  td.style.backgroundColor = 'mediumpurple';
-                  td.style.color = 'white';
-                }
-              }
-
-              if (gexOiBarCols.includes(key)) {
-                const num = parseFloat(value);
-                const max = maxValues[key];
-                if (!isNaN(num) && max > 0) {
-                  td.innerHTML = ''; // Clear default text
-                  const bar = document.createElement('div');
-                  bar.style.height = '12px';
-                  bar.style.width = `${(Math.abs(num) / max) * 100}%`;
-                  bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
-                  bar.style.margin = '0 auto 0 0'; // Align left
-                  bar.style.borderRadius = '2px';
-                  td.appendChild(bar);
+                } else {
+                  const intensity = Math.min((Math.abs(num) / max), 1);
+                  const green = Math.round(255 * (1 - intensity));
+                  const blue = Math.round(255 * intensity);
+                  td.style.backgroundColor = `rgb(${green}, ${green}, ${blue})`;
+                  td.style.color = 'black';
                 }
               }
             }
