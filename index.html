@@ -40,8 +40,13 @@
       color: #004085;
     }
     .entry-good {
-      background-color: #d4edda;
-      color: #155724;
+      background-color: #39ff14; /* neon green */
+      color: #000;
+      font-weight: bold;
+    }
+    .entry-orange {
+      background-color: orange;
+      color: #000;
       font-weight: bold;
     }
     .target-blue {
@@ -90,8 +95,13 @@
             }
 
             // Highlight Entry Signal
-            if (key === 'ENTRY_SIGNAL' && value.trim() === 'Under Ult Entry | GOOD profit') {
-              td.classList.add('entry-good');
+            if (key === 'ENTRY_SIGNAL') {
+              const signal = value.trim();
+              if (signal === 'Under Ult Entry | GOOD profit') {
+                td.classList.add('entry-good');
+              } else if (signal === 'Under 0 Entry | GOOD profit') {
+                td.classList.add('entry-orange');
+              }
             }
 
             // Highlight Target Price column
