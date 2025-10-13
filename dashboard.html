@@ -11,8 +11,8 @@
     th { background-color: #333; color: white; }
     .highlight-row { background-color: yellow; font-weight: bold; }
     .light-blue { background-color: #e0f7ff; }
-    .strike-blue { background-color: #add8e6; }
     .light-gray { background-color: #f0f0f0; }
+    .strike-blue { background-color: #add8e6; }
   </style>
 </head>
 <body>
@@ -67,14 +67,14 @@
           'EX_OI_AVG',
           'ZONE_OI_AVG',
           'POWER_OI_AVG',
-          'NEG_NEG_OI_AVG'
+          'NEG_NEG_OI_AVG',
+          'GEX_OI_AVG'
         ];
 
         const lightBlueCols = [
           'DTE_STRING_AVG',
           'DEX_AVG',
-          ...oiVolCols,
-
+          ...oiVolCols
         ];
 
         // First header row (grouped headers)
@@ -116,8 +116,9 @@
 
         data.forEach(row => {
           const tr = document.createElement('tr');
+          const isYellow = row['CURR'] === 'CURR';
 
-          if (row['CURR'] === 'CURR') {
+          if (isYellow) {
             tr.classList.add('highlight-row');
           }
 
@@ -126,16 +127,39 @@
             const value = row[key];
             td.textContent = value;
 
-            if (lightBlueCols.includes(key)) {
-              td.classList.add('light-blue');
-            }
+            if (!isYellow) {
+              if (lightBlueCols.includes(key)) {
+                td.classList.add('light-blue');
+              }
 
-            if (exOiCols.includes(key)) {
-              td.classList.add('light-gray');
-            }
+              if (exOiCols.includes(key)) {
+                td.classList.add('light-gray');
+              }
 
-            if (key === 'STRIKE') {
-              td.classList.add('strike-blue');
+              if (key === 'STRIKE') {
+                td.classList.add('strike-blue');
+              }
+
+              // Highlight M, M+, M- in ZONE_OI_VOL_AVG
+              if (key === 'ZONE_OI_VOL_AVG' && ['M', 'M+', 'M-'].includes(value.trim())) {
+                td.style.backgroundColor = 'yellow';
+                td.style.color = 'black';
+                td.style.fontWeight = 'bold';
+              }
+
+              // Symbol-based styling
+              if (value.trim() === '*') {
+                td.style.backgroundColor = '#00bfff'; // bright blue
+                td.style.fontWeight = 'bold';
+              } else if (value.trim() === '+') {
+                td.style.backgroundColor = 'green';
+                td.style.color = 'red';
+                td.style.fontWeight = 'bold';
+              } else if (value.trim() === '-') {
+                td.style.backgroundColor = 'red';
+                td.style.color = 'green';
+                td.style.fontWeight = 'bold';
+              }
             }
 
             tr.appendChild(td);
@@ -148,4 +172,3 @@
 
 </body>
 </html>
-
