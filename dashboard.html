@@ -206,23 +206,18 @@
               }
             }
 
-            if (powerOiCols.includes(key)) {
-              const num = parseFloat(value);
-              const max = maxPowerOi[key];
-              if (!isNaN(num) && max > 0) {
-                if (num === 1) {
-                  td.style.backgroundColor = 'red';
-                  td.style.color = 'white';
-                  td.style.fontWeight = 'bold';
-                } else {
-                  const intensity = Math.min((Math.abs(num) / max), 1);
-                  const green = Math.round(255 * (1 - intensity));
-                  const blue = Math.round(255 * intensity);
-                  td.style.backgroundColor = `rgb(${green}, ${green}, ${blue})`;
-                  td.style.color = 'black';
-                }
-              }
-            }
+if (powerOiCols.includes(key)) {
+  const num = parseFloat(value);
+  if (!isNaN(num) && num >= 2 && num <= 5) {
+    const lightness = 90 - ((num - 2) / 3) * 50; // 90% at 2, 40% at 5
+    td.style.backgroundColor = `hsl(220, 100%, ${lightness}%)`;
+    td.style.color = 'black';
+  } else if (num === 1) {
+    td.style.backgroundColor = 'red';
+    td.style.color = 'white';
+    td.style.fontWeight = 'bold';
+  }
+}
 
             tr.appendChild(td);
           });
@@ -234,3 +229,4 @@
 
 </body>
 </html>
+
