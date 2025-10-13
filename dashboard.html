@@ -9,8 +9,8 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
     th { background-color: #333; color: white; }
-    .highlight-row { background-color: yellow; font-weight: bold; }
-    .highlight-row td { border: 2px solid yellow !important; }
+    .highlight-row { background-color: #fff9c4; font-weight: normal; }
+    .highlight-row td { border: 1px solid #ccc !important; }
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
@@ -78,6 +78,11 @@
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
 
+        const maxValues = {};
+        gexOiBarCols.forEach(col => {
+          maxValues[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
+        });
+
         const groupHeaderRow = document.createElement('tr');
         let i = 0;
         while (i < columns.length) {
@@ -124,7 +129,6 @@
           columns.forEach(key => {
             const td = document.createElement('td');
             const value = row[key];
-            td.textContent = value;
 
             if (!isYellow) {
               if (lightBlueCols.includes(key)) td.classList.add('light-blue');
@@ -181,21 +185,22 @@
                 }
               }
 
-if (gexOiBarCols.includes(key)) {
-  const num = parseFloat(value);
-  if (!isNaN(num)) {
-    td.innerHTML = '';
+              if (gexOiBarCols.includes(key)) {
+                const num = parseFloat(value);
+                const max = maxValues[key];
+                if (!isNaN(num) && max > 0) {
+                  td.innerHTML = '';
 
-    const bar = document.createElement('div');
-    bar.style.height = '12px';
-    bar.style.width = `${Math.min(Math.abs(num), 100)}%`;
-    bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
-    bar.style.margin = '0 auto 0 0'; // align left
-    bar.style.borderRadius = '2px';
+                  const bar = document.createElement('div');
+                  bar.style.height = '12px';
+                  bar.style.width = `${(Math.abs(num) / max) * 100}%`;
+                  bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
+                  bar.style.margin = '0 auto 0 0';
+                  bar.style.borderRadius = '2px';
 
-    td.appendChild(bar);
-  }
-}
+                  td.appendChild(bar);
+                }
+              }
             }
 
             tr.appendChild(td);
@@ -208,5 +213,4 @@ if (gexOiBarCols.includes(key)) {
 
 </body>
 </html>
-                 
-
+             
