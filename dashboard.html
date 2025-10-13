@@ -5,9 +5,34 @@
   <title>Ticker Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .scroll-container {
+      max-height: 600px;
+      overflow-y: auto;
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .scroll-container table {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: middle;
+    }
+
     th {
       background-color: #333;
       color: white;
@@ -15,25 +40,27 @@
       top: 0;
       z-index: 2;
     }
+
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
+
     .curr-border-row {
       outline: 5px solid #ffeb3b;
       outline-offset: -2px;
       box-shadow: 0 0 10px 3px #fff176;
-      background-color: rgba(255, 255, 0, 0.2); /* light yellow tint */
+      background-color: rgba(255, 255, 0, 0.2);
     }
   </style>
 </head>
 <body>
 
   <h2 id="title">Details</h2>
-  <div style="max-height: 600px; overflow-y: auto;">
+  <div class="scroll-container">
     <table id="details-table"></table>
   </div>
 
-  <script>
+    <script>
     const urlParams = new URLSearchParams(window.location.search);
     const ticker = urlParams.get('ticker');
     document.getElementById('title').textContent = `Details for ${ticker}`;
@@ -51,75 +78,36 @@
           return;
         }
 
-        let columns = Object.keys(data[0]);
-
-        const floorIndex = columns.indexOf('PRICE_FLOOR');
-        const ceilingIndex = columns.indexOf('PRICE_CEILING');
-        if (floorIndex !== -1 && ceilingIndex !== -1) {
-          const temp = columns[floorIndex];
-          columns[floorIndex] = columns[ceilingIndex];
-          columns[ceilingIndex] = temp;
-        }
-
-        const oiVolGroups = [
-          ['GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG', 'NEG_NEG_OI_VOL_AVG'],
-          ['GEX_OI_VOL_AVG0', 'ZONE_OI_VOL_AVG0', 'POWER_OI_VOL_AVG0', 'NEG_NEG_OI_VOL_AVG0'],
-          ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0']
-        ];
-
-        const oiGroups = [
-          ['GEX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG'],
-          ['GEX_OI_AVG0', 'ZONE_OI_AVG0', 'POWER_OI_AVG0', 'NEG_NEG_OI_AVG0'],
-          ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0']
-        ];
-
-        const zoneVolCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_0'];
-        const zoneOiCols = ['ZONE_OI_AVG', 'ZONE_OI_AVG0', 'ZONE_OI_0'];
+        const columns = Object.keys(data[0]);
+        const groupHeaderRow = document.createElement('tr');
+        const headerRow = document.createElement('tr');
+        const oiVolGroups = [...]; // your existing group definitions
+        const oiGroups = [...];
+        const zoneVolCols = [...];
+        const zoneOiCols = [...];
         const zoneCols = [...zoneVolCols, ...zoneOiCols];
-        const negNegOiCols = [
-          'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0',
-          'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0',
-          'NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG'
-        ];
-        const oiVolCols_0 = ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0'];
-        const gexOiBarCols = [
-          'GEX_OI_VOL_AVG', 'GEX_OI_AVG',
-          'GEX_OI_VOL_AVG0', 'GEX_OI_AVG0',
-          'GEX_OI_VOL_0', 'GEX_OI_0'
-        ];
-        const powerOiCols = [
-          'POWER_OI_VOL_AVG', 'POWER_OI_AVG',
-          'POWER_OI_VOL_AVG0', 'POWER_OI_AVG0',
-          'POWER_OI_VOL_0', 'POWER_OI_0'
-        ];
-        const zeroAsEmptyCols = [
-          'NUMBER_OF_1_TOTAL_AVG',
-          'NUMBER_OF_1_TOTAL_AVG_0',
-          'NUMBER_OF_M_TOTAL_AVG',
-          'NUMBER_OF_M_TOTAL_AVG_0'
-        ];
-        const darkerBlueCols = ['DTE_STRING_AVG', 'DEX_AVG'];
-        const grayCols = ['DTE_STRING_AVG0', 'DEX_AVG0'];
-        const purpleCols = ['DTE_STRING_0', 'DEX_0'];
-        const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
-        const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
-        const strikeCols = ['STRIKE'];
+        const negNegOiCols = [...];
+        const oiVolCols_0 = [...];
+        const gexOiBarCols = [...];
+        const powerOiCols = [...];
+        const zeroAsEmptyCols = [...];
+        const darkerBlueCols = [...];
+        const grayCols = [...];
+        const purpleCols = [...];
+        const lightBlueCols = [...];
+        const lightGrayCols = [...];
+        const strikeCols = [...];
 
         const maxValues = {};
         gexOiBarCols.forEach(col => {
           maxValues[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
         });
 
-        const maxPowerOi = {};
-        powerOiCols.forEach(col => {
-          maxPowerOi[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
-        });
-        const groupHeaderRow = document.createElement('tr');
+        // Group headers
         let i = 0;
         while (i < columns.length) {
           const col = columns[i];
           const th = document.createElement('th');
-
           const matchGroup = (groupList, label) => {
             for (const group of groupList) {
               if (col === group[0]) {
@@ -134,117 +122,72 @@
             }
             return false;
           };
-
           if (matchGroup(oiVolGroups, 'OI+VOL')) continue;
           if (matchGroup(oiGroups, 'OI')) continue;
-
           th.textContent = '';
           groupHeaderRow.appendChild(th);
           i++;
         }
         table.appendChild(groupHeaderRow);
 
-        const headerRow = document.createElement('tr');
+        // Column headers
         columns.forEach(col => {
           const th = document.createElement('th');
-          if (col.includes('GEX')) {
-            th.textContent = 'GEX';
-          } else if (col.includes('ZONE')) {
-            th.textContent = 'Z';
-          } else if (col.includes('POWER')) {
-            th.textContent = 'P';
-          } else if (col.includes('NEG_NEG')) {
-            th.textContent = 'N/N';
-          } else if (col.includes('DTE')) {
-            th.textContent = 'DTE';
-          } else if (col.includes('DEX')) {
-            th.textContent = 'DEX';
-          } else {
-            th.textContent = col;
-          }
+          if (col.includes('GEX')) th.textContent = 'GEX';
+          else if (col.includes('ZONE')) th.textContent = 'Z';
+          else if (col.includes('POWER')) th.textContent = 'P';
+          else if (col.includes('NEG_NEG')) th.textContent = 'N/N';
+          else if (col.includes('DTE')) th.textContent = 'DTE';
+          else if (col.includes('DEX')) th.textContent = 'DEX';
+          else th.textContent = col;
           headerRow.appendChild(th);
         });
         table.appendChild(headerRow);
 
+        // Data rows
         data.forEach(row => {
           const tr = document.createElement('tr');
-          if (row['CURR'] === 'CURR') {
-            tr.classList.add('curr-border-row');
-          }
+          if (row['CURR'] === 'CURR') tr.classList.add('curr-border-row');
 
           columns.forEach(key => {
             const td = document.createElement('td');
             const value = row[key];
             td.textContent = value;
 
-            if (zeroAsEmptyCols.includes(key) && parseFloat(value) === 0) {
-              td.textContent = '';
-            }
-
+            if (zeroAsEmptyCols.includes(key) && parseFloat(value) === 0) td.textContent = '';
             if (lightBlueCols.includes(key)) td.classList.add('light-blue');
             if (lightGrayCols.includes(key)) td.classList.add('light-gray');
             if (strikeCols.includes(key)) td.classList.add('strike-blue');
-
-            if (darkerBlueCols.includes(key)) {
-              td.style.backgroundColor = '#90caf9';
-              td.style.color = 'black';
-            }
-
-            if (grayCols.includes(key)) {
-              td.style.backgroundColor = '#d3d3d3';
-              td.style.color = 'black';
-            }
-
-            if (purpleCols.includes(key)) {
-              td.style.backgroundColor = '#d1c4e9';
-              td.style.color = 'black';
-            }
-
-            if (zoneCols.includes(key)) {
-              td.style.fontSize = '16px';
-              td.style.fontWeight = 'bold';
-            }
+            if (darkerBlueCols.includes(key)) { td.style.backgroundColor = '#90caf9'; td.style.color = 'black'; }
+            if (grayCols.includes(key)) { td.style.backgroundColor = '#d3d3d3'; td.style.color = 'black'; }
+            if (purpleCols.includes(key)) { td.style.backgroundColor = '#d1c4e9'; td.style.color = 'black'; }
+            if (zoneCols.includes(key)) { td.style.fontSize = '16px'; td.style.fontWeight = 'bold'; }
 
             if (zoneVolCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
-              td.style.backgroundColor = 'yellow';
-              td.style.color = 'black';
-              td.style.fontWeight = 'bold';
+              td.style.backgroundColor = 'yellow'; td.style.color = 'black'; td.style.fontWeight = 'bold';
             }
 
             if (zoneOiCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
-              td.style.backgroundColor = 'black';
-              td.style.color = 'yellow';
-              td.style.fontWeight = 'bold';
+              td.style.backgroundColor = 'black'; td.style.color = 'yellow'; td.style.fontWeight = 'bold';
             }
 
             if (negNegOiCols.includes(key)) {
-              if (!isNaN(parseFloat(value)) && isFinite(value)) {
-                td.style.backgroundColor = '#ccffcc';
-                td.style.color = 'black';
-                td.style.fontWeight = 'bold';
+              if (!isNaN(parseFloat(value))) {
+                td.style.backgroundColor = '#ccffcc'; td.style.color = 'black'; td.style.fontWeight = 'bold';
               } else if (value.trim() === 'N/N') {
-                td.style.backgroundColor = '#f28b82'; // softer red
-                td.style.color = 'white';
-                td.style.fontWeight = 'bold';
+                td.style.backgroundColor = '#f28b82'; td.style.color = 'white'; td.style.fontWeight = 'bold';
               }
             }
 
             if (value.trim() === '*') {
-              td.style.backgroundColor = '#00bfff';
-              td.style.fontWeight = 'bold';
+              td.style.backgroundColor = '#00bfff'; td.style.fontWeight = 'bold';
             } else if (value.trim() === '+') {
-              td.style.backgroundColor = '#39ff14'; // neon green
-              td.style.color = 'black';
-              td.style.fontWeight = 'bold';
+              td.style.backgroundColor = '#39ff14'; td.style.color = 'black'; td.style.fontWeight = 'bold';
             } else if (value.trim() === '-') {
               if (zoneCols.includes(key)) {
-                td.style.backgroundColor = 'fuchsia'; // bright pink for zone -
-                td.style.color = 'black';
-                td.style.fontWeight = 'bold';
+                td.style.backgroundColor = 'fuchsia'; td.style.color = 'black'; td.style.fontWeight = 'bold';
               } else {
-                td.style.backgroundColor = 'red';
-                td.style.color = 'green';
-                td.style.fontWeight = 'bold';
+                td.style.backgroundColor = 'red'; td.style.color = 'green'; td.style.fontWeight = 'bold';
               }
             }
 
@@ -275,19 +218,6 @@
               }
             }
 
-            if (powerOiCols.includes(key)) {
-              const num = parseFloat(value);
-              if (!isNaN(num) && num >= 2 && num <= 5) {
-                const lightness = 40 + ((num - 2) / 3) * 50;
-                td.style.backgroundColor = `hsl(220, 100%, ${lightness}%)`;
-                td.style.color = 'black';
-              } else if (num === 1) {
-                td.style.backgroundColor = 'red';
-                td.style.color = 'white';
-                td.style.fontWeight = 'bold';
-              }
-            }
-
             if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
               const num = parseFloat(value);
               if (!isNaN(num)) {
@@ -310,4 +240,3 @@
 
 </body>
 </html>
-            
