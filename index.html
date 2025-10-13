@@ -40,7 +40,7 @@
       color: #004085;
     }
     .entry-good {
-      background-color: #39ff14; /* neon green */
+      background-color: #39ff14;
       color: #000;
       font-weight: bold;
     }
@@ -52,6 +52,16 @@
     .target-blue {
       background-color: #cce5ff;
       color: #004085;
+    }
+    .target-darkblue {
+      background-color: #0074cc;
+      color: #fff;
+      font-weight: bold;
+    }
+    .no-trade {
+      background-color: #000;
+      color: #fff;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -89,22 +99,23 @@
             const td = document.createElement('td');
             td.textContent = value;
 
+            const cleanValue = value.trim();
+
             // Highlight Ticker column
-            if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(value.trim().toUpperCase())) {
+            if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(cleanValue.toUpperCase())) {
               td.classList.add('highlight-ticker');
             }
 
             // Highlight Entry Signal
             if (key === 'ENTRY_SIGNAL') {
-              const signal = value.trim();
-              if (signal === 'Under Ult Entry | GOOD profit') {
+              if (cleanValue === 'Under Ult Entry | GOOD profit') {
                 td.classList.add('entry-good');
-              } else if (signal === 'Under 0 Entry | GOOD profit') {
+              } else if (cleanValue === 'Under 0 Entry | GOOD profit') {
                 td.classList.add('entry-orange');
               }
             }
 
-            // Highlight Target Price column
+            // Default Target Price background
             if (key === 'TARGET_PRICE') {
               td.classList.add('target-blue');
             }
@@ -117,10 +128,16 @@
               else if (percent < 0) td.classList.add('negative');
               else td.classList.add('neutral');
 
-              // Make Target Price bold if > 2%
+              // Make Target Price bold and dark blue if > 2%
               if (key === 'TARGET_PRICE' && percent > 2) {
-                td.style.fontWeight = 'bold';
+                td.classList.remove('target-blue');
+                td.classList.add('target-darkblue');
               }
+            }
+
+            // Black background for NO Trade
+            if (cleanValue === 'NO Trade') {
+              td.classList.add('no-trade');
             }
 
             tr.appendChild(td);
