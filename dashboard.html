@@ -8,22 +8,30 @@
     body { font-family: Arial, sans-serif; padding: 20px; }
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
-    th { background-color: #333; color: white; }
+    th {
+      background-color: #333;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
-.curr-border-row {
-  outline: 5px solid #ffeb3b;
-  outline-offset: -2px;
-  box-shadow: 0 0 10px 3px #fff176;
-  background-color: rgba(255, 255, 0, 0.2); /* light yellow tint */
-}
+    .curr-border-row {
+      outline: 5px solid #ffeb3b;
+      outline-offset: -2px;
+      box-shadow: 0 0 10px 3px #fff176;
+      background-color: rgba(255, 255, 0, 0.2); /* light yellow tint */
+    }
   </style>
 </head>
 <body>
 
   <h2 id="title">Details</h2>
-  <table id="details-table"></table>
+  <div style="max-height: 600px; overflow-y: auto;">
+    <table id="details-table"></table>
+  </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -106,7 +114,7 @@
         powerOiCols.forEach(col => {
           maxPowerOi[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
         });
-                const groupHeaderRow = document.createElement('tr');
+        const groupHeaderRow = document.createElement('tr');
         let i = 0;
         while (i < columns.length) {
           const col = columns[i];
@@ -230,7 +238,7 @@
               td.style.fontWeight = 'bold';
             } else if (value.trim() === '-') {
               if (zoneCols.includes(key)) {
-                td.style.backgroundColor = 'fuchsia';
+                td.style.backgroundColor = 'fuchsia'; // bright pink for zone -
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
               } else {
@@ -241,15 +249,14 @@
             }
 
             if (oiVolCols_0.includes(key)) {
-              const alreadyStyled =
-                td.style.backgroundColor ||
-                td.classList.contains('light-blue') ||
-                td.classList.contains('light-gray') ||
-                td.classList.contains('strike-blue');
-
-              if (!alreadyStyled) {
-                td.style.backgroundColor = 'mediumpurple';
-                td.style.color = 'white';
+              const num = parseFloat(value);
+              if (!isNaN(num)) {
+                const abs = Math.min(Math.abs(num), 100);
+                const lightness = 90 - (abs / 100) * 50;
+                const hue = num >= 0 ? 120 : 0;
+                td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
+                td.style.color = 'black';
+                td.textContent = num >= 0 ? '+' : '-';
               }
             }
 
@@ -281,17 +288,17 @@
               }
             }
 
-if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
-  const num = parseFloat(value);
-  if (!isNaN(num)) {
-    const abs = Math.min(Math.abs(num), 100);
-    const lightness = 90 - (abs / 100) * 50;
-    const hue = num >= 0 ? 120 : 0;
-    td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
-    td.style.color = 'black';
-    td.textContent = num >= 0 ? '+' : '-'; // only show sign
-  }
-}
+            if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
+              const num = parseFloat(value);
+              if (!isNaN(num)) {
+                const abs = Math.min(Math.abs(num), 100);
+                const lightness = 90 - (abs / 100) * 50;
+                const hue = num >= 0 ? 120 : 0;
+                td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
+                td.style.color = 'black';
+                td.textContent = num >= 0 ? '+' : '-';
+              }
+            }
 
             tr.appendChild(td);
           });
@@ -303,8 +310,4 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
-
-
-
-
-
+            
