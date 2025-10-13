@@ -65,17 +65,17 @@
         ];
 
         const oiVolCols0 = [
-          'GEX_OI_VOL_AVG0',
-          'ZONE_OI_VOL_AVG0',
-          'POWER_OI_VOL_AVG0',
-          'NEG_NEG_OI_VOL_AVG0'
+          'GEX_OI_VOL_0',
+          'ZONE_OI_VOL_0',
+          'POWER_OI_VOL_0',
+          'NEG_NEG_OI_VOL_0'
         ];
 
         const oiCols0 = [
-          'GEX_OI_AVG0',
-          'ZONE_OI_AVG0',
-          'POWER_OI_AVG0',
-          'NEG_NEG_OI_AVG0'
+          'GEX_OI_0',
+          'ZONE_OI_0',
+          'POWER_OI_0',
+          'NEG_NEG_OI_0'
         ];
 
         const exOiCols = [
@@ -187,19 +187,4 @@
                 td.style.backgroundColor = 'green';
                 td.style.color = 'red';
                 td.style.fontWeight = 'bold';
-              } else if (value.trim() === '-') {
-                td.style.backgroundColor = 'red';
-                td.style.color = 'green';
-                td.style.fontWeight = 'bold';
-              }
-            }
-
-            tr.appendChild(td);
-          });
-
-          table.appendChild(tr);
-        });
-      });
-  </script>
-
-</
+              } else
