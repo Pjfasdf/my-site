@@ -181,24 +181,21 @@
                 }
               }
 
-              if (gexOiBarCols.includes(key)) {
-                const num = parseFloat(value);
-                if (!isNaN(num)) {
-                  td.innerHTML = '';
-                  const bar = document.createElement('div');
-                  bar.style.height = '10px';
-                  bar.style.width = `${Math.min(Math.abs(num), 100)}%`;
-                  bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
-                  bar.style.margin = '2px auto';
-                  td.appendChild(bar);
+if (gexOiBarCols.includes(key)) {
+  const num = parseFloat(value);
+  if (!isNaN(num)) {
+    td.innerHTML = '';
 
-                  const label = document.createElement('div');
-                  label.textContent = value;
-                  label.style.fontSize = '12px';
-                  label.style.marginTop = '4px';
-                  td.appendChild(label);
-                }
-              }
+    const bar = document.createElement('div');
+    bar.style.height = '12px';
+    bar.style.width = `${Math.min(Math.abs(num), 100)}%`;
+    bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
+    bar.style.margin = '0 auto 0 0'; // align left
+    bar.style.borderRadius = '2px';
+
+    td.appendChild(bar);
+  }
+}
             }
 
             tr.appendChild(td);
@@ -212,3 +209,4 @@
 </body>
 </html>
                  
+
