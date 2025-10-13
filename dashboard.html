@@ -11,6 +11,7 @@
     th { background-color: #333; color: white; }
     .highlight-row { background-color: yellow; font-weight: bold; }
     .light-blue { background-color: #e0f7ff; }
+    .strike-blue { background-color: #add8e6; }
   </style>
 </head>
 <body>
@@ -110,6 +111,10 @@
 
             if (lightBlueCols.includes(key)) {
               td.classList.add('light-blue');
+            }
+
+            if (key === 'STRIKE') {
+              td.classList.add('strike-blue');
             }
 
             tr.appendChild(td);
