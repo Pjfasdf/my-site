@@ -129,6 +129,7 @@
           columns.forEach(key => {
             const td = document.createElement('td');
             const value = row[key];
+            td.textContent = value;
 
             if (!isYellow) {
               if (lightBlueCols.includes(key)) td.classList.add('light-blue');
@@ -189,15 +190,13 @@
                 const num = parseFloat(value);
                 const max = maxValues[key];
                 if (!isNaN(num) && max > 0) {
-                  td.innerHTML = '';
-
+                  td.innerHTML = ''; // Clear default text
                   const bar = document.createElement('div');
                   bar.style.height = '12px';
                   bar.style.width = `${(Math.abs(num) / max) * 100}%`;
                   bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
-                  bar.style.margin = '0 auto 0 0';
+                  bar.style.margin = '0 auto 0 0'; // Align left
                   bar.style.borderRadius = '2px';
-
                   td.appendChild(bar);
                 }
               }
@@ -213,4 +212,3 @@
 
 </body>
 </html>
-             
