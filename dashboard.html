@@ -10,6 +10,7 @@
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
     th { background-color: #333; color: white; }
     .highlight-row { background-color: yellow; font-weight: bold; }
+    .highlight-row td { border: 2px solid yellow !important; }
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
@@ -63,12 +64,27 @@
           'NEG_NEG_OI_AVG'
         ];
 
+        const oiVolCols0 = [
+          'GEX_OI_VOL_AVG0',
+          'ZONE_OI_VOL_AVG0',
+          'POWER_OI_VOL_AVG0',
+          'NEG_NEG_OI_VOL_AVG0'
+        ];
+
+        const oiCols0 = [
+          'GEX_OI_AVG0',
+          'ZONE_OI_AVG0',
+          'POWER_OI_AVG0',
+          'NEG_NEG_OI_AVG0'
+        ];
+
         const exOiCols = [
           'EX_OI_AVG',
           'ZONE_OI_AVG',
           'POWER_OI_AVG',
           'NEG_NEG_OI_AVG',
-          'GEX_OI_AVG'
+          'GEX_OI_AVG',
+          ...oiCols0
         ];
 
         const lightBlueCols = [
@@ -94,6 +110,22 @@
             if (col === oiCols[0]) {
               th.textContent = 'OI';
               th.colSpan = oiCols.length;
+              th.style.backgroundColor = '#555';
+              th.style.color = 'white';
+              groupHeaderRow.appendChild(th);
+            }
+          } else if (oiVolCols0.includes(col)) {
+            if (col === oiVolCols0[0]) {
+              th.textContent = 'OI+VOL';
+              th.colSpan = oiVolCols0.length;
+              th.style.backgroundColor = '#555';
+              th.style.color = 'white';
+              groupHeaderRow.appendChild(th);
+            }
+          } else if (oiCols0.includes(col)) {
+            if (col === oiCols0[0]) {
+              th.textContent = 'OI';
+              th.colSpan = oiCols0.length;
               th.style.backgroundColor = '#555';
               th.style.color = 'white';
               groupHeaderRow.appendChild(th);
@@ -170,5 +202,4 @@
       });
   </script>
 
-</body>
-</html>
+</
