@@ -9,6 +9,8 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
     th { background-color: #333; color: white; }
+    .highlight-row { background-color: yellow; font-weight: bold; }
+    .light-blue { background-color: #e0f7ff; }
   </style>
 </head>
 <body>
@@ -48,24 +50,25 @@
 
         data.forEach(row => {
           const tr = document.createElement('tr');
+
+          // Highlight entire row if CURR column equals "CURR"
+          if (row['CURR'] === 'CURR') {
+            tr.classList.add('highlight-row');
+          }
+
           columns.forEach((key, i) => {
             const td = document.createElement('td');
             const value = row[key];
             td.textContent = value;
 
-            // Highlight cells containing "CURR"
-            if (value.includes('CURR')) {
-              td.style.backgroundColor = 'yellow';
-              td.style.fontWeight = 'bold';
-            }
-
             // Highlight columns from DTE_AVG to just before DTE_AVG-0
             if (i >= startIndex && i < endIndex) {
-              td.style.backgroundColor = '#e0f7ff'; // light blue
+              td.classList.add('light-blue');
             }
 
             tr.appendChild(td);
           });
+
           table.appendChild(tr);
         });
       });
