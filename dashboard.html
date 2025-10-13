@@ -50,48 +50,13 @@
           columns[ceilingIndex] = temp;
         }
 
-        const oiVolCols = [
-          'GEX_OI_VOL_AVG',
-          'ZONE_OI_VOL_AVG',
-          'POWER_OI_VOL_AVG',
-          'NEG_NEG_OI_VOL_AVG'
-        ];
-
-        const oiCols = [
-          'GEX_OI_AVG',
-          'ZONE_OI_AVG',
-          'POWER_OI_AVG',
-          'NEG_NEG_OI_AVG'
-        ];
-
-        const oiVolCols0 = [
-          'GEX_OI_VOL_0',
-          'ZONE_OI_VOL_0',
-          'POWER_OI_VOL_0',
-          'NEG_NEG_OI_VOL_0'
-        ];
-
-        const oiCols0 = [
-          'GEX_OI_0',
-          'ZONE_OI_0',
-          'POWER_OI_0',
-          'NEG_NEG_OI_0'
-        ];
-
-        const exOiCols = [
-          'EX_OI_AVG',
-          'ZONE_OI_AVG',
-          'POWER_OI_AVG',
-          'NEG_NEG_OI_AVG',
-          'GEX_OI_AVG',
-          ...oiCols0
-        ];
-
-        const lightBlueCols = [
-          'DTE_STRING_AVG',
-          'DEX_AVG',
-          ...oiVolCols
-        ];
+        const oiVolCols = ['GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG', 'NEG_NEG_OI_VOL_AVG'];
+        const oiCols = ['GEX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG'];
+        const oiVolCols0 = ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0'];
+        const oiCols0 = ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0'];
+        const exOiCols = ['EX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG', 'GEX_OI_AVG', ...oiCols0];
+        const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolCols];
+        const zoneHighlightCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_0'];
 
         // First header row (grouped headers)
         const groupHeaderRow = document.createElement('tr');
@@ -149,10 +114,7 @@
         data.forEach(row => {
           const tr = document.createElement('tr');
           const isYellow = row['CURR'] === 'CURR';
-
-          if (isYellow) {
-            tr.classList.add('highlight-row');
-          }
+          if (isYellow) tr.classList.add('highlight-row');
 
           columns.forEach(key => {
             const td = document.createElement('td');
@@ -160,20 +122,12 @@
             td.textContent = value;
 
             if (!isYellow) {
-              if (lightBlueCols.includes(key)) {
-                td.classList.add('light-blue');
-              }
+              if (lightBlueCols.includes(key)) td.classList.add('light-blue');
+              if (exOiCols.includes(key)) td.classList.add('light-gray');
+              if (key === 'STRIKE') td.classList.add('strike-blue');
 
-              if (exOiCols.includes(key)) {
-                td.classList.add('light-gray');
-              }
-
-              if (key === 'STRIKE') {
-                td.classList.add('strike-blue');
-              }
-
-              // Highlight M, M+, M- in ZONE_OI_VOL_AVG
-              if (key === 'ZONE_OI_VOL_AVG' && ['M', 'M+', 'M-'].includes(value.trim())) {
+              // Highlight M, M+, M- in ZONE_OI_VOL columns
+              if (zoneHighlightCols.includes(key) && ['M', 'M+', 'M-'].includes(value.trim())) {
                 td.style.backgroundColor = 'yellow';
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
@@ -181,10 +135,26 @@
 
               // Symbol-based styling
               if (value.trim() === '*') {
-                td.style.backgroundColor = '#00bfff'; // bright blue
+                td.style.backgroundColor = '#00bfff';
                 td.style.fontWeight = 'bold';
               } else if (value.trim() === '+') {
                 td.style.backgroundColor = 'green';
                 td.style.color = 'red';
                 td.style.fontWeight = 'bold';
-              } else
+              } else if (value.trim() === '-') {
+                td.style.backgroundColor = 'red';
+                td.style.color = 'green';
+                td.style.fontWeight = 'bold';
+              }
+            }
+
+            tr.appendChild(td);
+          });
+
+          table.appendChild(tr);
+        });
+      });
+  </script>
+
+</body>
+</html>
