@@ -11,8 +11,8 @@
     th { background-color: #333; color: white; }
     .highlight-row { background-color: yellow; font-weight: bold; }
     .light-blue { background-color: #e0f7ff; }
-    .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #add8e6; }
+    .light-gray { background-color: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -116,9 +116,8 @@
 
         data.forEach(row => {
           const tr = document.createElement('tr');
-          const isYellow = row['CURR'] === 'CURR';
 
-          if (isYellow) {
+          if (row['CURR'] === 'CURR') {
             tr.classList.add('highlight-row');
           }
 
@@ -127,25 +126,25 @@
             const value = row[key];
             td.textContent = value;
 
-            if (!isYellow) {
-              if (lightBlueCols.includes(key)) {
-                td.classList.add('light-blue');
-              }
+            if (lightBlueCols.includes(key)) {
+              td.classList.add('light-blue');
+            }
 
-              if (exOiCols.includes(key)) {
-                td.classList.add('light-gray');
-              }
+            if (exOiCols.includes(key)) {
+              td.classList.add('light-gray');
+            }
 
-              if (key === 'STRIKE') {
-                td.classList.add('strike-blue');
-              }
+            if (key === 'STRIKE') {
+              td.classList.add('strike-blue');
+            }
 
-              // Highlight M, M+, M- in ZONE_OI_VOL_AVG
-              if (key === 'ZONE_OI_VOL_AVG' && ['M', 'M+', 'M-'].includes(value.trim())) {
-                td.style.backgroundColor = 'yellow';
-                td.style.color = 'black';
-                td.style.fontWeight = 'bold';
-              }
+            tr.appendChild(td);
+          });
 
-              // Symbol-based styling
-              if (value.trim()
+          table.appendChild(tr);
+        });
+      });
+  </script>
+
+</body>
+</html>
