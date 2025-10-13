@@ -214,7 +214,7 @@
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
               } else if (value.trim() === 'N/N') {
-                td.style.backgroundColor = 'red';
+                td.style.backgroundColor = '#f28b82'; // softer red
                 td.style.color = 'white';
                 td.style.fontWeight = 'bold';
               }
@@ -224,13 +224,19 @@
               td.style.backgroundColor = '#00bfff';
               td.style.fontWeight = 'bold';
             } else if (value.trim() === '+') {
-              td.style.backgroundColor = 'green';
-              td.style.color = 'red';
+              td.style.backgroundColor = '#39ff14'; // neon green
+              td.style.color = 'black';
               td.style.fontWeight = 'bold';
             } else if (value.trim() === '-') {
-              td.style.backgroundColor = 'red';
-              td.style.color = 'green';
-              td.style.fontWeight = 'bold';
+              if (zoneCols.includes(key)) {
+                td.style.backgroundColor = 'orange';
+                td.style.color = 'black';
+                td.style.fontWeight = 'bold';
+              } else {
+                td.style.backgroundColor = 'red';
+                td.style.color = 'green';
+                td.style.fontWeight = 'bold';
+              }
             }
 
             if (oiVolCols_0.includes(key)) {
