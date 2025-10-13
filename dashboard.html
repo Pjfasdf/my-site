@@ -69,6 +69,7 @@
           'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0',
           'NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG'
         ];
+        const oiVolCols_0 = ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0'];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
@@ -160,19 +161,4 @@
                 td.style.color = 'red';
                 td.style.fontWeight = 'bold';
               } else if (value.trim() === '-') {
-                td.style.backgroundColor = 'red';
-                td.style.color = 'green';
-                td.style.fontWeight = 'bold';
-              }
-            }
-
-            tr.appendChild(td);
-          });
-
-          table.appendChild(tr);
-        });
-      });
-  </script>
-
-</body>
-</html>
+                td.style
