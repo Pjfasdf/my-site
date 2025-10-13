@@ -209,7 +209,7 @@
 if (powerOiCols.includes(key)) {
   const num = parseFloat(value);
   if (!isNaN(num) && num >= 2 && num <= 5) {
-    const lightness = 90 - ((num - 2) / 3) * 50; // 90% at 2, 40% at 5
+    const lightness = 40 + ((num - 2) / 3) * 50; // 40% at 2, 90% at 5
     td.style.backgroundColor = `hsl(220, 100%, ${lightness}%)`;
     td.style.color = 'black';
   } else if (num === 1) {
@@ -229,4 +229,5 @@ if (powerOiCols.includes(key)) {
 
 </body>
 </html>
+
 
