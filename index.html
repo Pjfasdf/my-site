@@ -133,6 +133,13 @@
                 td.classList.remove('target-blue');
                 td.classList.add('target-darkblue');
               }
+
+              // Dynamic orange for FIRST_ENTRY_PRICE_0DTE
+              if (key === 'FIRST_ENTRY_PRICE_0DTE' && percent < 0) {
+                const brightness = Math.min(100, Math.abs(percent) * 2);
+                td.style.backgroundColor = `hsl(39, 100%, ${brightness}%)`;
+                td.style.color = brightness > 70 ? '#000' : '#fff';
+              }
             }
 
             // Black background for NO Trade
