@@ -88,17 +88,18 @@
         data.forEach(row => {
           const tr = document.createElement('tr');
 
-          // Make the entire row clickable
+          // Make the entire row clickable in a popup
           tr.onclick = () => {
             const ticker = row['TICKER'].trim();
-            window.location.href = `dashboard.html?ticker=${encodeURIComponent(ticker)}`;
+            const url = `dashboard.html?ticker=${encodeURIComponent(ticker)}`;
+            window.open(url, 'DashboardPopup', 'width=1000,height=800,resizable=yes,scrollbars=yes');
           };
           tr.style.cursor = 'pointer';
+          tr.title = 'Click to open dashboard';
 
           Object.entries(row).forEach(([key, value]) => {
             const td = document.createElement('td');
             const cleanValue = value.trim();
-
             td.textContent = value;
 
             if (key === 'TICKER') {
