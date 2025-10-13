@@ -135,11 +135,17 @@
               }
 
               // Dynamic orange for FIRST_ENTRY_PRICE_0DTE
-              if (key === 'FIRST_ENTRY_PRICE_0DTE' && percent < 0) {
-                const brightness = Math.min(100, Math.abs(percent) * 2);
-                td.style.backgroundColor = `hsl(39, 100%, ${brightness}%)`;
-                td.style.color = brightness > 70 ? '#000' : '#fff';
-              }
+if (key === 'FIRST_ENTRY_PRICE_0DTE') {
+  const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+  if (match) {
+    const percent = parseFloat(match[1]);
+    if (percent < 0) {
+      const brightness = Math.min(100, Math.abs(percent) * 2); // cap at 100%
+      td.style.backgroundColor = `hsl(39, 100%, ${brightness}%)`; // orange hue
+      td.style.color = brightness > 70 ? '#000' : '#fff'; // readable text
+    }
+  }
+}
             }
 
             // Black background for NO Trade
