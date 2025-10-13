@@ -34,6 +34,10 @@
       background-color: #fff3cd;
       color: #856404;
     }
+    .highlight-ticker {
+      background-color: #cce5ff;
+      color: #004085;
+    }
   </style>
 </head>
 <body>
@@ -66,9 +70,14 @@
         // Create rows
         data.forEach(row => {
           const tr = document.createElement('tr');
-          Object.entries(row).forEach(([key, value]) => {
+          Object.entries(row).forEach(([key, value], index) => {
             const td = document.createElement('td');
             td.textContent = value;
+
+            // Highlight Ticker column if value matches
+            if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(value.trim().toUpperCase())) {
+              td.classList.add('highlight-ticker');
+            }
 
             // Apply background color based on percentage
             const match = value.match(/([-+]?\d+(\.\d+)?)%/);
