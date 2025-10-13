@@ -27,6 +27,7 @@
       right: 20px;
       font-size: 14px;
       color: #555;
+      text-align: right;
     }
   </style>
 </head>
@@ -38,9 +39,31 @@
 
   <script>
     const refreshTime = new Date();
-    document.getElementById('refresh-time').textContent =
-      'Last refresh: ' + refreshTime.toLocaleString();
+    const refreshDiv = document.getElementById('refresh-time');
+    refreshDiv.textContent = 'Last refresh: ' + refreshTime.toLocaleString();
 
+    // Load execution status timestamps
+    fetch('watchlist_execution_status.csv')
+      .then(response => response.text())
+      .then(csv => {
+        const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        const data = results.data;
+
+        if (data.length > 0) {
+          const latest = data[data.length - 1];
+          const etradeTime = latest['ETRADE_DOWNLOAD_TIME'];
+          const excelTime = latest['EXCEL_DOWNLOAD_TIME'];
+
+          const extraInfo = document.createElement('div');
+          extraInfo.innerHTML = `
+            <div><strong>E*TRADE Download:</strong> ${etradeTime}</div>
+            <div><strong>Excel Download:</strong> ${excelTime}</div>
+          `;
+          refreshDiv.appendChild(extraInfo);
+        }
+      });
+
+    // Load watchlist data
     fetch('watchlist.csv')
       .then(response => response.text())
       .then(csv => {
@@ -49,33 +72,48 @@
         const table = document.getElementById('data-table');
         table.innerHTML = '';
 
+        const headerMap = {
+          'FIRST_ENTRY_PRICE_0DTE': '0DTE_ENTRY',
+          'ULTIMATE_ENTRY_PRICE': 'ULT_ENTRY'
+        };
+
         const headerRow = document.createElement('tr');
         Object.keys(data[0]).forEach(col => {
           const th = document.createElement('th');
-          th.textContent = col;
+          th.textContent = headerMap[col] || col;
           headerRow.appendChild(th);
         });
         table.appendChild(headerRow);
 
         data.forEach(row => {
           const tr = document.createElement('tr');
+
+          // Make the entire row clickable
+          tr.onclick = () => {
+            const ticker = row['TICKER'].trim();
+            window.location.href = `dashboard.html?ticker=${encodeURIComponent(ticker)}`;
+          };
+          tr.style.cursor = 'pointer';
+
           Object.entries(row).forEach(([key, value]) => {
             const td = document.createElement('td');
             const cleanValue = value.trim();
 
-            if (key === 'TICKER') {
-              const link = document.createElement('a');
-              link.href = `dashboard.html?ticker=${encodeURIComponent(cleanValue)}`;
-              link.textContent = cleanValue;
-              link.style.color = 'inherit';
-              link.style.textDecoration = 'underline';
-              td.appendChild(link);
+            td.textContent = value;
 
+            if (key === 'TICKER') {
               if (['SPX', 'SPY', 'QQQ', 'IWM'].includes(cleanValue.toUpperCase())) {
                 td.classList.add('highlight-ticker');
               }
-            } else {
-              td.textContent = value;
+            }
+
+            if (key === 'CURRENT_PRICE') {
+              const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+              if (match) {
+                const percent = parseFloat(match[1]);
+                td.style.color = percent >= 0 ? 'green' : 'red';
+                td.style.fontWeight = 'bold';
+              }
             }
 
             if (key === 'ENTRY_SIGNAL') {
@@ -133,6 +171,7 @@
 
             tr.appendChild(td);
           });
+
           table.appendChild(tr);
         });
       });
