@@ -6,68 +6,21 @@
   <title>Watchlist Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    th {
-      background-color: #333;
-      color: white;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #333; color: white; }
     tr:hover {
-      outline: 4px solid magenta;
-      background-color: #fff8e1;
+      outline: 2px solid magenta;
+      background-color: #ffe1ff;
       cursor: pointer;
     }
-    .positive {
-      background-color: #d4edda;
-      color: #155724;
-    }
-    .negative {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-    .neutral {
-      background-color: #fff3cd;
-      color: #856404;
-    }
-    .highlight-ticker {
-      background-color: #cce5ff;
-      color: #004085;
-    }
-    .entry-good {
-      background-color: #39ff14;
-      color: #000;
-      font-weight: bold;
-    }
-    .entry-orange {
-      background-color: orange;
-      color: #000;
-      font-weight: bold;
-    }
-    .target-blue {
-      background-color: #cce5ff;
-      color: #004085;
-    }
-    .target-darkblue {
-      background-color: #0074cc;
-      color: #fff;
-      font-weight: bold;
-    }
-    .no-trade {
-      background-color: #000;
-      color: #fff;
-      font-weight: bold;
-    }
+    .highlight-ticker { background-color: #cce5ff; color: #004085; }
+    .entry-good { background-color: #39ff14; color: #000; font-weight: bold; }
+    .entry-orange { background-color: orange; color: #000; font-weight: bold; }
+    .target-blue { background-color: #cce5ff; color: #004085; }
+    .target-darkblue { background-color: #0074cc; color: #fff; font-weight: bold; }
+    .no-trade { background-color: #000; color: #fff; font-weight: bold; }
     #refresh-time {
       position: absolute;
       top: 20px;
@@ -84,7 +37,6 @@
   <table id="data-table"></table>
 
   <script>
-    // Show last refresh time
     const refreshTime = new Date();
     document.getElementById('refresh-time').textContent =
       'Last refresh: ' + refreshTime.toLocaleString();
@@ -92,16 +44,11 @@
     fetch('watchlist.csv')
       .then(response => response.text())
       .then(csv => {
-        const results = Papa.parse(csv, {
-          header: true,
-          skipEmptyLines: true
-        });
-
+        const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
         const data = results.data;
         const table = document.getElementById('data-table');
         table.innerHTML = '';
 
-        // Create header
         const headerRow = document.createElement('tr');
         Object.keys(data[0]).forEach(col => {
           const th = document.createElement('th');
@@ -110,21 +57,27 @@
         });
         table.appendChild(headerRow);
 
-        // Create rows
         data.forEach(row => {
           const tr = document.createElement('tr');
           Object.entries(row).forEach(([key, value]) => {
             const td = document.createElement('td');
-            td.textContent = value;
-
             const cleanValue = value.trim();
 
-            // Highlight Ticker column
-            if (key === 'TICKER' && ['SPX', 'SPY', 'QQQ', 'IWM'].includes(cleanValue.toUpperCase())) {
-              td.classList.add('highlight-ticker');
+            if (key === 'TICKER') {
+              const link = document.createElement('a');
+              link.href = `dashboard.html?ticker=${encodeURIComponent(cleanValue)}`;
+              link.textContent = cleanValue;
+              link.style.color = 'inherit';
+              link.style.textDecoration = 'underline';
+              td.appendChild(link);
+
+              if (['SPX', 'SPY', 'QQQ', 'IWM'].includes(cleanValue.toUpperCase())) {
+                td.classList.add('highlight-ticker');
+              }
+            } else {
+              td.textContent = value;
             }
 
-            // Highlight Entry Signal
             if (key === 'ENTRY_SIGNAL') {
               if (cleanValue === 'Under Ult Entry | GOOD profit') {
                 td.classList.add('entry-good');
@@ -133,70 +86,47 @@
               }
             }
 
-            // Default Target Price background
             if (key === 'TARGET_PRICE') {
               td.classList.add('target-blue');
             }
 
-            // Apply background color based on percentage
             const match = value.match(/([-+]?\d+(\.\d+)?)%/);
             if (match) {
               const percent = parseFloat(match[1]);
-              if (percent > 0) td.classList.add('positive');
-              else if (percent < 0) td.classList.add('negative');
-              else td.classList.add('neutral');
 
-              // Make Target Price bold and dark blue if > 2%
               if (key === 'TARGET_PRICE' && percent > 2) {
                 td.classList.remove('target-blue');
                 td.classList.add('target-darkblue');
               }
 
-              // FIRST_ENTRY_PRICE_0DTE gradient + bold
               if (key === 'FIRST_ENTRY_PRICE_0DTE' && percent < 0) {
-                let bgColor = '';
-                if (percent >= -0.5) {
-                  bgColor = '#ffe5cc';
-                } else if (percent >= -1) {
-                  bgColor = '#ffcc99';
-                } else if (percent >= -2) {
-                  bgColor = '#ff9933';
-                } else {
-                  bgColor = '#ff6600';
-                }
+                let bgColor = percent >= -0.5 ? '#ffe5cc' :
+                              percent >= -1   ? '#ffcc99' :
+                              percent >= -2   ? '#ff9933' : '#ff6600';
                 td.style.backgroundColor = bgColor;
                 td.style.color = '#000';
                 td.style.fontWeight = 'bold';
               }
 
-              // ULTIMATE_ENTRY_PRICE gradient + bold + yellow for mild positive
               if (key === 'ULTIMATE_ENTRY_PRICE') {
                 if (percent < 0) {
-                  let bgColor = '';
-                  if (percent >= -0.5) {
-                    bgColor = '#eaffea';
-                  } else if (percent >= -1) {
-                    bgColor = '#caffca';
-                  } else if (percent >= -2) {
-                    bgColor = '#aaffaa';
-                  } else {
-                    bgColor = '#66ff66';
-                  }
+                  let bgColor = percent >= -0.5 ? '#eaffea' :
+                                percent >= -1   ? '#caffca' :
+                                percent >= -2   ? '#aaffaa' : '#66ff66';
                   td.style.backgroundColor = bgColor;
                   td.style.color = '#000';
                   td.style.fontWeight = 'bold';
                 } else if (percent >= 0 && percent <= 1.5) {
-                  td.style.backgroundColor = '#ffff99'; // yellow
+                  td.style.backgroundColor = '#ffff99';
                   td.style.color = '#000';
                   td.style.fontWeight = 'bold';
                 } else if (percent > 1.5) {
-                  td.style.backgroundColor = '#ffffff'; // white
+                  td.style.backgroundColor = '#ffffff';
                   td.style.color = '#000';
                 }
               }
             }
 
-            // Black background for NO Trade (partial match)
             if (cleanValue.includes('NO Trade')) {
               td.classList.add('no-trade');
             }
