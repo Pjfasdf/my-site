@@ -149,6 +149,7 @@
           const th = document.createElement('th');
           if (col.includes('GEX')) {
             th.textContent = 'GEX';
+            th.classList.add('bold-border-left');
           } else if (col.includes('ZONE')) {
             th.textContent = 'Z';
           } else if (col.includes('POWER')) {
@@ -311,6 +312,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
+
 
 
 
