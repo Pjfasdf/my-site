@@ -287,7 +287,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
     const abs = Math.min(Math.abs(num), 100);
     const lightness = 90 - (abs / 100) * 50;
     const hue = num >= 0 ? 120 : 0;
-    td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
+    td.style.backgroundColor = `hsl(${hue}, 50%, ${lightness}%)`;
     td.style.color = 'black';
     td.textContent = num >= 0 ? '+' : '-'; // only show sign
   }
@@ -303,6 +303,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
+
 
 
 
