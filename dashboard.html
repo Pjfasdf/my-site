@@ -154,9 +154,7 @@
             th.textContent = 'Z';
           } else if (col.includes('POWER')) {
             th.textContent = 'P';
-          } else if (col.includes(          'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0',
-          'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0',
-          'NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG')) {
+          } else if (col.includes('NEG_NEG')) {
             th.textContent = 'N/N';
                         th.classList.add('bold-border-right');
           } else if (col.includes('DTE')) {
@@ -325,6 +323,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
+
 
 
 
