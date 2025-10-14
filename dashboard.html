@@ -11,13 +11,25 @@
     th { background-color: #333; color: white; }
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
-    .strike-blue { background-color: #00ffff; }
+    .strike-blue { background-color: #add8e6; }
 .curr-border-row {
   outline: 5px solid #ffeb3b;
   outline-offset: -2px;
   box-shadow: 0 0 10px 3px #fff176;
   background-color: rgba(255, 255, 0, 0.2); /* light yellow tint */
+
+  
 }
+
+    .bold-border-left {
+  border-left: 4px solid black;
+}
+
+.bold-border-right {
+  border-right: 4px solid black;
+}
+
+    
   </style>
 </head>
 <body>
@@ -90,9 +102,9 @@
           'NUMBER_OF_M_TOTAL_AVG',
           'NUMBER_OF_M_TOTAL_AVG_0'
         ];
-        const darkerBlueCols = ['DTE_STRING_AVG', 'DEX_AVG','GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG']; 
-        const grayCols = ['DTE_STRING_AVG0', 'DEX_AVG0','GEX_OI_VOL_AVG0', 'ZONE_OI_VOL_AVG0', 'POWER_OI_VOL_AVG0'];
-        const purpleCols = ['DTE_STRING_0', 'DEX_0', 'GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0'];
+        const darkerBlueCols = ['DTE_STRING_AVG', 'DEX_AVG'];
+        const grayCols = ['DTE_STRING_AVG0', 'DEX_AVG0'];
+        const purpleCols = ['DTE_STRING_0', 'DEX_0'];
         const lightBlueCols = ['DTE_STRING_AVG', 'DEX_AVG', ...oiVolGroups.flat()];
         const lightGrayCols = ['EX_OI_AVG', ...oiGroups.flat()];
         const strikeCols = ['STRIKE'];
@@ -230,7 +242,7 @@
               td.style.fontWeight = 'bold';
             } else if (value.trim() === '-') {
               if (zoneCols.includes(key)) {
-                td.style.backgroundColor = '#ff0000';
+                td.style.backgroundColor = 'fuchsia';
                 td.style.color = 'black';
                 td.style.fontWeight = 'bold';
               } else {
@@ -261,7 +273,7 @@
                 const bar = document.createElement('div');
                 bar.style.height = '12px';
                 bar.style.width = `${(Math.abs(num) / max) * 100}%`;
-                bar.style.backgroundColor = num >= 0 ? '#3cb371' : '#ff6347';
+                bar.style.backgroundColor = num >= 0 ? 'green' : 'red';
                 bar.style.margin = '0 auto 0 0';
                 bar.style.borderRadius = '2px';
                 td.appendChild(bar);
@@ -287,7 +299,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
     const abs = Math.min(Math.abs(num), 100);
     const lightness = 90 - (abs / 100) * 50;
     const hue = num >= 0 ? 120 : 0;
-    td.style.backgroundColor = `hsl(${hue}, 50%, ${lightness}%)`;
+    td.style.backgroundColor = `hsl(${hue}, 100%, ${lightness}%)`;
     td.style.color = 'black';
     td.textContent = num >= 0 ? '+' : '-'; // only show sign
   }
@@ -303,12 +315,6 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
-
-
-
-
-
-
 
 
 
