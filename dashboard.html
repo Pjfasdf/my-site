@@ -149,13 +149,14 @@
           const th = document.createElement('th');
           if (col.includes('GEX')) {
             th.textContent = 'GEX';
-            th.classList.add('bold-border-left');
+
           } else if (col.includes('ZONE')) {
             th.textContent = 'Z';
           } else if (col.includes('POWER')) {
             th.textContent = 'P';
           } else if (col.includes('NEG_NEG')) {
             th.textContent = 'N/N';
+                        th.classList.add('bold-border-right');
           } else if (col.includes('DTE')) {
             th.textContent = 'DTE';
             th.classList.add('bold-border-left');
@@ -179,8 +180,13 @@
             const value = row[key];
             td.textContent = value;
 
-            if (['GEX','DTE'].some(keyword => key.includes(keyword))) {
+            if (['DTE'].some(keyword => key.includes(keyword))) {
   td.classList.add('bold-border-left');
+}
+
+            
+            if (['N/N'].some(keyword => key.includes(keyword))) {
+  td.classList.add('bold-border-right');
 }
             
             if (zeroAsEmptyCols.includes(key) && parseFloat(value) === 0) {
@@ -317,6 +323,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
+
 
 
 
