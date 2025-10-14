@@ -178,6 +178,10 @@
             const value = row[key];
             td.textContent = value;
 
+            if (['GEX'].some(keyword => key.includes(keyword))) {
+  td.classList.add('bold-border-left');
+}
+            
             if (zeroAsEmptyCols.includes(key) && parseFloat(value) === 0) {
               td.textContent = '';
             }
@@ -312,6 +316,7 @@ if (['DEX_AVG', 'DEX_AVG0', 'DEX_0'].includes(key)) {
 
 </body>
 </html>
+
 
 
 
