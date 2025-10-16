@@ -6,27 +6,50 @@
   <title>Watchlist Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
-    th { background-color: #333; color: white; }
+    body { font-family: Arial, sans-serif;
+padding: 20px; }
+    table { border-collapse: collapse; width: 100%;
+}
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center;
+}
+    th { background-color: #333; color: white;
+}
     tr:hover {
       outline: 2px solid magenta;
       background-color: #ffe1ff;
       cursor: pointer;
-    }
+}
     .highlight-ticker { background-color: #cce5ff; color: #004085; }
-    .entry-good { background-color: #39ff14; color: #000; font-weight: bold; }
-    .entry-orange { background-color: orange; color: #000; font-weight: bold; }
+    .entry-good { background-color: #39ff14; color: #000;
+font-weight: bold; }
+    .entry-orange { background-color: orange; color: #000; font-weight: bold;
+}
+    /* Existing/Previous Custom Entry Styles */
+    .entry-neutral { background-color: #e0e0e0; color: #000; }
+    .entry-warning { background-color: #ff9999; color: #a00; font-weight: bold; }
+    .entry-mid-profit { background-color: #ffc107; color: #000; font-weight: bold; } /* Under 0 Entry | MID profit */
+    .entry-near-good { background-color: #80cbc4; color: #000; font-weight: bold; } /* Near Ult Entry | GOOD profit */
+    .entry-no-profit { background-color: #f8bbd0; color: #000; font-weight: bold; } /* Under Ult Entry | NO profit */
+    .entry-near-mid { background-color: #c8e6c9; color: #000; font-weight: bold; } /* Near Ult Entry | MID profit (Changed to Green) */
+    .entry-under0-no { background-color: #f48fb1; color: #000; font-weight: bold; } /* Under 0 Entry | NO profit */
+    
+    /* OTHER STYLES */
+    .entry-underult-mid { background-color: #f4c2c2; color: #000; font-weight: bold; } /* Under Ult Entry | MID profit */
+    .entry-at0-good { background-color: #a5d6a7; color: #000; font-weight: bold; } /* AT 0 Entry | GOOD profit */
+    .entry-at0-mid { background-color: #ffb74d; color: #000; font-weight: bold; } /* AT 0 Entry | MID profit */
+    .entry-near0-good { background-color: #c8e6c9; color: #000; font-weight: bold; } /* Near 0 Entry | GOOD profit */
+
     .target-blue { background-color: #cce5ff; color: #004085; }
-    .target-darkblue { background-color: #0074cc; color: #fff; font-weight: bold; }
-    .no-trade { background-color: #000; color: #fff; font-weight: bold; }
+    .target-darkblue { background-color: #0074cc; color: #fff;
+font-weight: bold; }
+    .no-trade { background-color: #000; color: #fff; font-weight: bold;
+}
     #refresh-time {
       position: absolute;
       top: 20px;
       right: 20px;
       font-size: 14px;
-      color: #555;
+color: #555;
       text-align: right;
     }
   </style>
@@ -39,11 +62,10 @@
 
   <script>
     const refreshTime = new Date();
-    const refreshDiv = document.getElementById('refresh-time');
+const refreshDiv = document.getElementById('refresh-time');
     refreshDiv.textContent = 'Last refresh: ' + refreshTime.toLocaleString();
-
     // Load execution status timestamps
-    fetch('watchlist_execution_status.csv')
+    fetch('watchlist_execution_status.csv?' + new Date().getTime())
       .then(response => response.text())
       .then(csv => {
         const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
@@ -52,19 +74,19 @@
         if (data.length > 0) {
           const latest = data[data.length - 1];
           const etradeTime = latest['ETRADE_DOWNLOAD_TIME'];
+     
           const excelTime = latest['EXCEL_DOWNLOAD_TIME'];
 
           const extraInfo = document.createElement('div');
           extraInfo.innerHTML = `
             <div><strong>E*TRADE Download:</strong> ${etradeTime}</div>
-            <div><strong>Excel Download:</strong> ${excelTime}</div>
+            <div><strong>TOS.rtd Download:</strong> ${excelTime}</div>
           `;
           refreshDiv.appendChild(extraInfo);
         }
       });
-
     // Load watchlist data
-    fetch('watchlist.csv')
+    fetch('watchlist.csv?' + new Date().getTime())
       .then(response => response.text())
       .then(csv => {
         const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
@@ -74,6 +96,7 @@
 
         const headerMap = {
           'FIRST_ENTRY_PRICE_0DTE': '0DTE_ENTRY',
+   
           'ULTIMATE_ENTRY_PRICE': 'ULT_ENTRY'
         };
 
@@ -85,19 +108,19 @@
         });
         table.appendChild(headerRow);
 
-        data.forEach(row => {
+        data.forEach(row => 
+{
           const tr = document.createElement('tr');
 
           // Make the entire row clickable in a popup
           tr.onclick = () => {
             const ticker = row['TICKER'].trim();
-            const url = `dashboard.html?ticker=${encodeURIComponent(ticker)}`;
+const url = `dashboard.html?ticker=${encodeURIComponent(ticker)}`;
             window.open(url, 'DashboardPopup', 'width=1000,height=800,resizable=yes,scrollbars=yes');
           };
           tr.style.cursor = 'pointer';
           tr.title = 'Click to open dashboard';
-
-          Object.entries(row).forEach(([key, value]) => {
+Object.entries(row).forEach(([key, value]) => {
             const td = document.createElement('td');
             const cleanValue = value.trim();
             td.textContent = value;
@@ -105,23 +128,78 @@
             if (key === 'TICKER') {
               if (['SPX', 'SPY', 'QQQ', 'IWM'].includes(cleanValue.toUpperCase())) {
                 td.classList.add('highlight-ticker');
+  
               }
+              // ADDED: Make the TICKER column bold
+              td.style.fontWeight = 'bold';
             }
 
             if (key === 'CURRENT_PRICE') {
               const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+              
+              // Logic to add the % if it's missing (e.g., changes (1.93) to (1.93%))
+              if (!match) {
+                const parentheticalMatch = value.match(/(\s*\()([-+]?\d+(\.\d+)?)\)/);
+                if (parentheticalMatch) {
+                  // Reconstruct the string: "Price (Value%)"
+                  td.textContent = value.replace(parentheticalMatch[0], `${parentheticalMatch[1]}${parentheticalMatch[2]}%)`);
+                } else {
+                  td.textContent = value;
+                }
+              }
+
               if (match) {
                 const percent = parseFloat(match[1]);
+        
                 td.style.color = percent >= 0 ? 'green' : 'red';
                 td.style.fontWeight = 'bold';
+              }
+              
+              // If there was no percentage match, but we modified the content, re-run the match for coloring
+              if (!match) {
+                  const newMatch = td.textContent.match(/([-+]?\d+(\.\d+)?)%/);
+                  if (newMatch) {
+                      const percent = parseFloat(newMatch[1]);
+                      td.style.color = percent >= 0 ? 'green' : 'red';
+                      td.style.fontWeight = 'bold';
+                  }
               }
             }
 
             if (key === 'ENTRY_SIGNAL') {
               if (cleanValue === 'Under Ult Entry | GOOD profit') {
+ 
                 td.classList.add('entry-good');
               } else if (cleanValue === 'Under 0 Entry | GOOD profit') {
                 td.classList.add('entry-orange');
+              } else if (cleanValue === 'Under 0 Entry | MID profit') { 
+                td.classList.add('entry-mid-profit');
+              } else if (cleanValue === 'Near Ult Entry | GOOD profit') { 
+                td.classList.add('entry-near-good');
+              } else if (cleanValue === 'Under Ult Entry | NO profit') { 
+                td.classList.add('entry-no-profit');
+              } else if (cleanValue === 'Near Ult Entry | MID profit') { 
+                td.classList.add('entry-near-mid'); // CHANGED COLOR HERE
+              } else if (cleanValue === 'Under 0 Entry | NO profit') { 
+                td.classList.add('entry-under0-no');
+              } 
+              
+              // OTHER CONDITIONS
+              else if (cleanValue === 'Under Ult Entry | MID profit') {
+                td.classList.add('entry-underult-mid');
+              } else if (cleanValue === 'AT 0 Entry | GOOD profit') {
+                td.classList.add('entry-at0-good');
+              } else if (cleanValue === 'AT 0 Entry | MID profit') {
+                td.classList.add('entry-at0-mid');
+              } else if (cleanValue === 'Near 0 Entry | GOOD profit') {
+                td.classList.add('entry-near0-good');
+              }
+              
+              // DEFAULT/WARNING CONDITIONS
+              else if (cleanValue === 'Neutral Signal') { 
+                td.classList.add('entry-neutral');
+              } else if (cleanValue.includes('Warning')) { 
+                td.classList.add('entry-warning');
               }
             }
 
@@ -130,45 +208,50 @@
             }
 
             const match = value.match(/([-+]?\d+(\.\d+)?)%/);
-            if (match) {
+if (match) {
               const percent = parseFloat(match[1]);
-
-              if (key === 'TARGET_PRICE' && percent > 2) {
+if (key === 'TARGET_PRICE' && percent > 2) {
                 td.classList.remove('target-blue');
-                td.classList.add('target-darkblue');
+td.classList.add('target-darkblue');
               }
 
               if (key === 'FIRST_ENTRY_PRICE_0DTE' && percent < 0) {
-                let bgColor = percent >= -0.5 ? '#ffe5cc' :
-                              percent >= -1   ? '#ffcc99' :
-                              percent >= -2   ? '#ff9933' : '#ff6600';
+                let bgColor = percent >= -0.5 ?
+'#ffe5cc' :
+                              percent >= -1   ?
+'#ffcc99' :
+                              percent >= -2   ?
+'#ff9933' : '#ff6600';
                 td.style.backgroundColor = bgColor;
                 td.style.color = '#000';
                 td.style.fontWeight = 'bold';
-              }
+}
 
               if (key === 'ULTIMATE_ENTRY_PRICE') {
                 if (percent < 0) {
-                  let bgColor = percent >= -0.5 ? '#eaffea' :
-                                percent >= -1   ? '#caffca' :
-                                percent >= -2   ? '#aaffaa' : '#66ff66';
+                  let bgColor = percent >= -0.5 ?
+'#eaffea' :
+                                percent >= -1   ?
+'#caffca' :
+                                percent >= -2   ?
+'#aaffaa' : '#66ff66';
                   td.style.backgroundColor = bgColor;
                   td.style.color = '#000';
                   td.style.fontWeight = 'bold';
-                } else if (percent >= 0 && percent <= 1.5) {
+} else if (percent >= 0 && percent <= 1.5) {
                   td.style.backgroundColor = '#ffff99';
-                  td.style.color = '#000';
+td.style.color = '#000';
                   td.style.fontWeight = 'bold';
                 } else if (percent > 1.5) {
                   td.style.backgroundColor = '#ffffff';
-                  td.style.color = '#000';
+td.style.color = '#000';
                 }
               }
             }
 
             if (cleanValue.includes('NO Trade')) {
               td.classList.add('no-trade');
-            }
+}
 
             tr.appendChild(td);
           });
