@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ticker Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 5px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
+    th { 
+      background-color: #333;
+      color: white; 
+      position: sticky; 
+      z-index: 8;
+    }
+    
+    .reduced-height-header {
+      padding: 4px 10px !important; 
+      font-size: 0.9em; 
+    }
+    
+    tr:hover {
+        background-color: rgba(255, 0, 255, 0.15) !important; 
+    }
+
+    tr:hover td, tr:hover th {
+        border: 4px solid #FF00FF !important;
+    }
+
+    .light-blue { background-color: #e0f7ff; }
+    .light-gray { background-color: #f0f0f0; }
+    .strike-blue { background-color: #00ffff; }
+    .curr-border-row {
+      font-weight: bold;
+      outline: 5px solid #ffeb3b;
+      outline-offset: -2px;
+      box-shadow: 0 0 10px 3px #fff176;
+      background-color: rgba(255, 255, 0, 0.2);
+    }
+    .bold-border-left { border-left: 4px solid black; }
+    .bold-border-right { border-right: 4px solid black; }
+
+    /* MODAL STYLES */
+    #alert-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      /* Removed the dark background-color here */
+      background-color: transparent; 
+      /* Allows clicking the table behind the modal if needed, 
+         though the content box will override this */
+      pointer-events: none; 
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border: 2px solid #f44336;
+      width: 300px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      /* Re-enable pointer events for the actual alert box */
+      pointer-events: auto; 
+    }
+    .modal-content h3 { color: #d32f2f; margin-top: 0; }
+    .modal-content button {
+      background-color: #333;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2 id="title">Details</h2>
+  <p id="refresh-timer" style="margin-top: -10px; font-size: 0.9em; color: #666; font-weight: bold;"></p>
+  <table id="details-table"></table>
+
+  <div id="alert-modal">
+    <div class="modal-content">
+      <h3 id="modal-title">GEX Alert</h3>
+      <p id="modal-body"></p>
+      <button onclick="closeModal()">Dismiss</button>
+    </div>
+  </div>
+
+  <script>
+    const REFRESH_INTERVAL_MS = 5000; 
+    let initialLoadComplete = false;
+
+    // --- STATE TRACKING ALERT SYSTEM ---
+    let lastKnownStates = {};
+    
+    if (window.Notification && Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
+    function showAlert(title, message) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').textContent = message;
+        document.getElementById('alert-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('alert-modal').style.display = 'none';
+    }
+
+    function formatNumber(value) {
+        const numberValue = parseFloat(value);
+        if (isNaN(numberValue)) return value;
+        if (Math.abs(numberValue - Math.round(numberValue)) < 1e-6) return Math.round(numberValue).toString();
+        return numberValue.toString(); 
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const ticker = urlParams.get('ticker');
+    document.getElementById('title').textContent = `Details for ${ticker}`;
+    const table = document.getElementById('details-table');
+    const refreshTimerEl = document.getElementById('refresh-timer');
+
+    function refreshDashboard() {
+        const scrollPosition = window.scrollY; 
+        
+        fetch('dashboard_High.csv?' + new Date().getTime(), { cache: 'no-store' }) 
+          .then(response => {
+            if (!response.ok) throw new Error(`File network failed: ${response.status}`);
+            return response.text();
+          })
+          .then(csv => {
+            const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
+            const rawData = results.data;
+            const data = rawData.filter(row => row.TICKER?.trim().toUpperCase() === ticker?.trim().toUpperCase());
+            
+            if (data.length === 0) {
+              if (initialLoadComplete) return;
+              table.innerHTML = '<tr><td>No data found for this ticker.</td></tr>';
+              return;
+            }
+
+            const fragment = document.createDocumentFragment(); 
+            const lastTimestamp = rawData[0]['EXECUTION_TIME_STAMP'] || 'N/A';
+            refreshTimerEl.textContent = `Last Data Refresh: ${lastTimestamp}`;
+            
+            let currStrike = null;
+            data.forEach(row => { if (row['CURR'] === 'CURR') currStrike = parseFloat(row['STRIKE']); });
+            
+            const gradientCols = ['NUMBER_OF_M_TOTAL_AVG_0', 'NUMBER_OF_1_TOTAL_AVG_0', 'NUMBER_OF_M_TOTAL_AVG', 'NUMBER_OF_1_TOTAL_AVG'];
+            let maxSummaryValue = 0;
+            gradientCols.forEach(col => {
+              data.forEach(row => {
+                const val = parseFloat(row[col]);
+                if (!isNaN(val)) maxSummaryValue = Math.max(maxSummaryValue, Math.abs(val));
+              });
+            });
+
+            let columns = Object.keys(data[0]);
+            
+            const exclude = [
+                'CURRENT_PRICE', 'PERCENT_CHANGE', 'CURR', 'TICKER', 'PRICE_FLOOR', 
+                'EXECUTION_TIME_STAMP', 'DTE_STRING_AVG', 
+                'DTE_STRING_AVG0', 'DTE_STRING_0', 'DTE_STRING_1', 'DEX_1',
+                'DEX_AVG', 'DEX_AVG0', 'DEX_0'
+            ];
+            columns = columns.filter(col => !exclude.includes(col));
+
+            const pCIdx = columns.indexOf('PRICE_CEILING');
+            const strikeIdx = columns.indexOf('STRIKE');
+            if (pCIdx !== -1 && strikeIdx !== -1) {
+                const col = columns.splice(pCIdx, 1)[0];
+                const newStrikeIdx = columns.indexOf('STRIKE');
+                columns.splice(newStrikeIdx + 1, 0, col);
+            }
+
+            const cols0 = columns.filter(c => c.endsWith('_0') && !c.startsWith('NUMBER_OF'));
+            const cols1 = columns.filter(c => c.endsWith('_1'));
+            if (cols0.length > 0 && cols1.length > 0) {
+                const first1 = columns.indexOf(cols1[0]);
+                const first0 = columns.indexOf(cols0[0]);
+                if (first1 < first0) {
+                    const removed1 = columns.splice(first1, cols1.length);
+                    const newFirst0 = columns.indexOf(cols0[0]);
+                    columns.splice(newFirst0 + cols0.length, 0, ...removed1);
+                }
+            }
+
+            const oiVolGroups = [
+              ['GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG', 'NEG_NEG_OI_VOL_AVG'],
+              ['GEX_OI_VOL_AVG0', 'ZONE_OI_VOL_AVG0', 'POWER_OI_VOL_AVG0', 'NEG_NEG_OI_VOL_AVG0'],
+              ['GEX_OI_VOL_0', 'ZONE_OI_VOL_0', 'POWER_OI_VOL_0', 'NEG_NEG_OI_VOL_0'],
+              ['GEX_OI_VOL_1', 'ZONE_OI_VOL_1', 'POWER_OI_VOL_1', 'NEG_NEG_OI_VOL_1']
+            ];
+            const oiGroups = [
+              ['GEX_OI_AVG', 'ZONE_OI_AVG', 'POWER_OI_AVG', 'NEG_NEG_OI_AVG'],
+              ['GEX_OI_AVG0', 'ZONE_OI_AVG0', 'POWER_OI_AVG0', 'NEG_NEG_OI_AVG0'],
+              ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0'],
+              ['GEX_OI_1', 'ZONE_OI_1', 'POWER_OI_1', 'NEG_NEG_OI_1']
+            ];
+
+            const zoneCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_1', 'ZONE_OI_VOL_0', 'ZONE_OI_AVG', 'ZONE_OI_AVG0', 'ZONE_OI_1', 'ZONE_OI_0'];
+            const negNegOiCols = ['NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG', 'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0', 'NEG_NEG_OI_VOL_1', 'NEG_NEG_OI_1', 'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0'];
+            const powerOiCols = ['POWER_OI_VOL_AVG', 'POWER_OI_AVG', 'POWER_OI_VOL_AVG0', 'POWER_OI_AVG0', 'POWER_OI_VOL_1', 'POWER_OI_1', 'POWER_OI_VOL_0', 'POWER_OI_0'];
+            const gexOiBarCols = ['GEX_OI_VOL_AVG', 'GEX_OI_AVG', 'GEX_OI_VOL_AVG0', 'GEX_OI_AVG0', 'GEX_OI_VOL_1', 'GEX_OI_1', 'GEX_OI_VOL_0', 'GEX_OI_0'];
+
+            const maxValues = {};
+            gexOiBarCols.forEach(col => {
+              maxValues[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
+            });
+
+            // HEADER CONSTRUCTION
+            const topRow = document.createElement('tr');
+            const thT = document.createElement('th');
+            const normT = ticker?.trim().toUpperCase();
+            const colors = { 'SPX': '#007bff', 'SPY': '#ff00ff', 'QQQ': '#ff9900' };
+            thT.textContent = normT;
+            thT.colSpan = columns.length; 
+            thT.style.backgroundColor = colors[normT] || '#3cb371';
+            thT.style.color = 'black'; 
+            thT.style.fontSize = '20px';
+            thT.style.top = '0px'; thT.style.zIndex = 11;
+            topRow.appendChild(thT);
+            fragment.appendChild(topRow);
+
+            const superRow = document.createElement('tr');
+            const createSH = (text, span, color, z = 10, textColor = 'black') => {
+                const th = document.createElement('th');
+                th.textContent = text; th.colSpan = span;
+                th.style.backgroundColor = color; th.style.color = textColor;
+                th.style.top = '20px'; th.style.zIndex = z;
+                th.classList.add('reduced-height-header');
+                return th;
+            };
+
+            const countSfx = (sfx) => columns.filter(c => c.endsWith(sfx) && !c.startsWith('NUMBER_OF')).length;
+            const modelSpan = columns.filter(c => c.startsWith('NUMBER_OF')).length;
+
+            superRow.appendChild(createSH('', 2, '#333'));
+            superRow.appendChild(createSH('AVG', countSfx('_AVG'), '#90caf9'));
+            superRow.appendChild(createSH('AVG-0', countSfx('_AVG0'), '#d3d3d3'));
+            superRow.appendChild(createSH('0', countSfx('_0'), '#d1c4e9'));
+            superRow.appendChild(createSH('1', countSfx('_1'), '#fff3e0')); 
+            superRow.appendChild(createSH('Models', modelSpan, '#424242', 10, 'white'));
+            fragment.appendChild(superRow);
+
+            const midRow = document.createElement('tr');
+            let i = 0;
+            while (i < columns.length) {
+              const col = columns[i];
+              const th = document.createElement('th');
+              th.style.top = '38px'; th.style.zIndex = 9; th.classList.add('reduced-height-header');
+              const findGroup = (groups, label) => {
+                for (const g of groups) { 
+                  const actualGroup = g.filter(gc => columns.includes(gc));
+                  if (actualGroup.length > 0 && col === actualGroup[0]) {
+                    th.textContent = label; th.colSpan = actualGroup.length;
+                    th.style.backgroundColor = '#555'; th.style.color = 'white';
+                    midRow.appendChild(th); i += actualGroup.length; return true;
+                  }
+                } return false;
+              };
+              if (col.startsWith('NUMBER_OF_M_TOTAL')) {
+                th.textContent = col.includes('AVG_0') ? 'AVG-0 Model' : 'AVG Model';
+                th.colSpan = 2; th.style.backgroundColor = col.includes('AVG_0') ? '#304ffe' : '#4caf50';
+                midRow.appendChild(th); i += 2; continue;
+              }
+              if (col === 'STRIKE' || col === 'PRICE_CEILING') {
+                th.textContent = ''; th.colSpan = 1; th.style.backgroundColor = '#333';
+                midRow.appendChild(th); i++; continue;
+              }
+              if (findGroup(oiVolGroups, 'OI+VOL')) continue;
+              if (findGroup(oiGroups, 'OI')) continue;
+              midRow.appendChild(th); i++;
+            }
+            fragment.appendChild(midRow);
+
+            const headRow = document.createElement('tr');
+            columns.forEach(col => {
+              const th = document.createElement('th');
+              th.style.top = '56px';
+              if (col.includes('GEX')) th.textContent = 'GEX';
+              else if (col.includes('ZONE')) { th.textContent = 'Z'; th.style.fontSize = '18px'; }
+              else if (col.includes('POWER')) th.textContent = 'P';
+              else if (col.includes('NEG_NEG')) { th.textContent = 'N/N'; th.classList.add('bold-border-right'); }
+              else if (col === 'PRICE_CEILING') { th.textContent = 'MID'; th.classList.add('bold-border-right'); }
+              else if (col === 'STRIKE') th.textContent = 'STRIKE';
+              else if (col.includes('DEX')) { th.textContent = 'DEX'; th.classList.add('bold-border-left'); }
+              else {
+                th.textContent = col.includes('NUMBER_OF_M') ? 'Ms' : (col.includes('NUMBER_OF_1') ? '1s' : col);
+                if (col.includes('NUMBER_OF_M_TOTAL')) th.classList.add('bold-border-left');
+              }
+              headRow.appendChild(th);
+            });
+            fragment.appendChild(headRow);
+
+            // DATA ROWS
+            data.forEach(row => {
+              const tr = document.createElement('tr');
+              
+              if (row['CURR'] === 'CURR') { 
+                  tr.classList.add('curr-border-row'); 
+
+                  const triggerValues = ['M', '+', '-', 'M+', 'M-'];
+                  const currentZone = (row['ZONE_OI_VOL_0'] || '').trim();
+                  const stateKey = `${ticker}_${row['STRIKE']}`;
+
+                  if (triggerValues.includes(currentZone) && lastKnownStates[stateKey] !== currentZone) {
+                      lastKnownStates[stateKey] = currentZone; 
+                      const alertTitle = `New GEX Signal: ${ticker}`;
+                      const alertBody = `Strike ${row['STRIKE']} is now Zone ${currentZone}.`;
+
+                      if (window.Notification && Notification.permission === "granted") {
+                          new Notification(alertTitle, { body: alertBody });
+                      } else {
+                          showAlert(alertTitle, alertBody);
+                      }
+                  } else if (!triggerValues.includes(currentZone)) {
+                      lastKnownStates[stateKey] = null;
+                  }
+              }
+              
+              columns.forEach(key => {
+                const td = document.createElement('td');
+                let val = row[key];
+                const isModelCol = key.startsWith('NUMBER_OF_M_TOTAL') || key.startsWith('NUMBER_OF_1_TOTAL');
+                if (powerOiCols.includes(key)) val = formatNumber(val);
+
+                if (gradientCols.includes(key) && !isModelCol) {
+                  const num = parseFloat(val);
+                  if (!isNaN(num) && num !== 0) {
+                    if (maxSummaryValue > 0) {
+                      const norm = Math.abs(num) / maxSummaryValue;
+                      let hue = 240, light = 90 - (norm * 30);
+                      if (key.includes('NUMBER_OF_1')) {
+                          const s = parseFloat(row['STRIKE']);
+                          if (row['CURR'] === 'CURR') { val = `CURR-${val}`; hue = 60; }
+                          else if (s > currStrike) { val = `RES-${val}`; hue = 0; light = 85 - (norm * 55); }
+                          else { val = `SUP-${val}`; hue = 120; }
+                      } else {
+                          val = (key.includes('AVG_0') ? 'MS-' : 'M-') + val;
+                          hue = key.includes('AVG_0') ? 30 : 270;
+                      }
+                      td.style.backgroundColor = `hsl(${hue}, 100%, ${light}%)`;
+                    }
+                  } else { val = ''; }
+                }
+
+                if (isModelCol) {
+                    const num = parseFloat(val);
+                    if (isNaN(num) || num === 0) { val = ''; } 
+                    else {
+                        if (key.includes('NUMBER_OF_1')) {
+                            const s = parseFloat(row['STRIKE']);
+                            if (row['CURR'] === 'CURR') val = `CURR-${val}`;
+                            else if (s > currStrike) val = `RES-${val}`;
+                            else val = `SUP-${val}`;
+                        } else { val = (key.includes('AVG_0') ? 'MS-' : 'M-') + val; }
+                    }
+                }
+
+                td.textContent = val;
+                if (key === 'PRICE_CEILING' || key.includes('NEG_NEG')) td.classList.add('bold-border-right');
+                if (key.includes('DEX') || key.startsWith('NUMBER_OF_M')) td.classList.add('bold-border-left');
+                if (key === 'STRIKE') { td.classList.add('strike-blue'); td.style.fontWeight = 'bold'; }
+                
+                if (!isModelCol) {
+                    if (key.endsWith('_AVG')) { td.style.backgroundColor = oiVolGroups[0].includes(key) ? '#64b5f6' : '#90caf9'; td.style.color = 'black'; }
+                    if (key.endsWith('_AVG0')) { td.style.backgroundColor = oiVolGroups[1].includes(key) ? '#b0b0b0' : '#d3d3d3'; td.style.color = 'black'; }
+                    if (key.endsWith('_1')) { td.style.backgroundColor = oiVolGroups[3].includes(key) ? '#e9e2c3' : '#fff3e0'; td.style.color = 'black'; }
+                    if (key.endsWith('_0')) {
+                        const alreadyStyled = td.style.backgroundColor || td.classList.contains('strike-blue');
+                        if (!alreadyStyled) { td.style.backgroundColor = key.includes('OI_VOL_0') ? 'mediumpurple' : '#d1c4e9'; td.style.color = 'black'; }
+                    }
+                    if (gexOiBarCols.includes(key)) {
+                      const n = parseFloat(val), m = maxValues[key];
+                      if (!isNaN(n) && m > 0) td.innerHTML = `<div style="height:12px; width:${(Math.abs(n)/m)*100}%; background-color:${n>=0?'#3cb371':'#ff6347'}; border-radius:2px;"></div>`;
+                    }
+                    if (zoneCols.includes(key)) {
+                      td.style.fontSize = '18px'; td.style.fontWeight = 'bold';
+                      if (['M','M+','M-'].includes(val.trim())) {
+                        if (key.includes('VOL')) { td.style.backgroundColor='yellow'; td.style.color='black'; }
+                        else { td.style.backgroundColor='black'; td.style.color='yellow'; }
+                      }
+                    }
+                    if (negNegOiCols.includes(key)) {
+                        if (!isNaN(parseFloat(val))) { td.style.backgroundColor='#ccffcc'; td.style.color='black'; td.style.fontWeight='bold'; }
+                        else if (val.trim()==='N/N') { td.style.backgroundColor='#f25649'; td.style.color='white'; td.style.fontWeight='bold'; }
+                    }
+                    if (powerOiCols.includes(key)) {
+                        const pMap = { '1':'red', '2':'#0A5AF2', '3':'#5985D9', '4':'#85ABF2', '5':'#A2BEF2' };
+                        if (pMap[val]) { td.style.backgroundColor = pMap[val]; td.style.color = 'black'; }
+                    }
+                    if (val.trim()==='*') { td.style.backgroundColor='#00bfff'; td.style.fontWeight='bold'; }
+                    else if (val.trim()==='+') { td.style.backgroundColor='#39ff14'; td.style.fontWeight='bold'; }
+                    else if (val.trim()==='-') { td.style.backgroundColor='red'; td.style.color=zoneCols.includes(key)?'black':'green'; td.style.fontWeight='bold'; }
+                }
+
+                tr.appendChild(td);
+              });
+              fragment.appendChild(tr);
+            });
+            table.innerHTML = ''; table.appendChild(fragment);
+            
+            const currRowEl = table.querySelector('.curr-border-row');
+            if (!initialLoadComplete && currRowEl) {
+              setTimeout(() => { currRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 0);
+            } else { window.scrollTo(0, scrollPosition); }
+            initialLoadComplete = true;
+          })
+          .catch(err => console.warn('Refresh skipped:', err.message));
+    }
+    refreshDashboard();
+    setInterval(refreshDashboard, REFRESH_INTERVAL_MS);
+  </script>
+</body>
+</html>

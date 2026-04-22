@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="30">
+  <title>Watchlist Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #333; color: white; }
+    tr:hover { outline: 2px solid magenta; background-color: #ffe1ff; cursor: pointer; }
+    .highlight-ticker { background-color: #cce5ff; color: #004085; }
+    .entry-good { background-color: #39ff14; color: #000; font-weight: bold; }
+    .entry-orange { background-color: orange; color: #000; font-weight: bold; }
+    .entry-neutral { background-color: #e0e0e0; color: #000; }
+    .entry-warning { background-color: #ff9999; color: #a00; font-weight: bold; }
+    .entry-mid-profit { background-color: #ffc107; color: #000; font-weight: bold; }
+    .entry-near-good { background-color: #80cbc4; color: #000; font-weight: bold; }
+    .entry-no-profit { background-color: #f8bbd0; color: #000; font-weight: bold; }
+    .entry-near-mid { background-color: #c8e6c9; color: #000; font-weight: bold; }
+    .entry-under0-no { background-color: #f48fb1; color: #000; font-weight: bold; }
+    .entry-underult-mid { background-color: #f4c2c2; color: #000; font-weight: bold; }
+    .entry-at0-good { background-color: #a5d6a7; color: #000; font-weight: bold; }
+    .entry-at0-mid { background-color: #ffb74d; color: #000; font-weight: bold; }
+    .entry-near0-good { background-color: #c8e6c9; color: #000; font-weight: bold; }
+    .target-blue { background-color: #cce5ff; color: #004085; }
+    .target-darkblue { background-color: #0074cc; color: #fff; font-weight: bold; }
+    .no-trade { background-color: #000; color: #fff; font-weight: bold; }
+    #refresh-time { position: absolute; top: 20px; right: 20px; font-size: 14px; color: #555; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <h2>Watchlist Dashboard</h2>
+  <div id="refresh-time"></div>
+  <table id="data-table"></table>
+
+  <script>
+    const refreshTime = new Date();
+    const refreshDiv = document.getElementById('refresh-time');
+    refreshDiv.textContent = 'Last refresh: ' + refreshTime.toLocaleString();
+
+    // Load execution status timestamps
+    fetch('watchlist_execution_status.csv?' + new Date().getTime())
+      .then(response => response.text())
+      .then(csv => {
+        const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        const data = results.data;
+
+        console.log("Parsed CSV Data:", data); // Debug log
+
+        if (data.length > 0) {
+          const latest = data[data.length - 1];
+          const etradeTime = latest['ETRADE_DOWNLOAD_TIME']?.trim() || 'N/A';
+          const excelTime = latest['EXCEL_DOWNLOAD_TIME']?.trim() || 'N/A';
+
+          const extraInfo = document.createElement('div');
+          extraInfo.innerHTML = `
+            <div><strong>E*TRADE Download:</strong> ${etradeTime}</div>
+            <div><strong>TOS.rtd Download:</strong> ${excelTime}</div>
+          `;
+          refreshDiv.appendChild(extraInfo);
+        } else {
+          refreshDiv.innerHTML += '<div><strong>Execution status data not found.</strong></div>';
+        }
+      })
+      .catch(error => {
+        console.error("Error loading execution status CSV:", error);
+        refreshDiv.innerHTML += '<div><strong>Error loading execution status.</strong></div>';
+      });
+
+    // Load watchlist data
+    fetch('watchlist.csv?' + new Date().getTime())
+      .then(response => response.text())
+      .then(csv => {
+        const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        const data = results.data;
+        const table = document.getElementById('data-table');
+        table.innerHTML = '';
+
+        const headerMap = {
+          'FIRST_ENTRY_PRICE_0DTE': '0DTE_ENTRY',
+          'ULTIMATE_ENTRY_PRICE': 'ULT_ENTRY'
+        };
+
+        const headerRow = document.createElement('tr');
+        Object.keys(data[0]).forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = headerMap[col] || col;
+          headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.onclick = () => {
+            const ticker = row['TICKER'].trim();
+            const url = `dashboard.html?ticker=${encodeURIComponent(ticker)}`;
+            window.open(url, 'DashboardPopup', 'width=1000,height=800,resizable=yes,scrollbars=yes');
+          };
+          tr.style.cursor = 'pointer';
+          tr.title = 'Click to open dashboard';
+
+          Object.entries(row).forEach(([key, value]) => {
+            const td = document.createElement('td');
+            const cleanValue = value.trim();
+            td.textContent = value;
+
+            if (key === 'TICKER') {
+              if (['SPX', 'SPY', 'QQQ', 'IWM'].includes(cleanValue.toUpperCase())) {
+                td.classList.add('highlight-ticker');
+              }
+              td.style.fontWeight = 'bold';
+            }
+
+            if (key === 'CURRENT_PRICE') {
+              const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+              if (!match) {
+                const parentheticalMatch = value.match(/(\s*\()([-+]?\d+(\.\d+)?)\)/);
+                if (parentheticalMatch) {
+                  td.textContent = value.replace(parentheticalMatch[0], `${parentheticalMatch[1]}${parentheticalMatch[2]}%)`);
+                }
+              }
+              const percentMatch = td.textContent.match(/([-+]?\d+(\.\d+)?)%/);
+              if (percentMatch) {
+                const percent = parseFloat(percentMatch[1]);
+                td.style.color = percent >= 0 ? 'green' : 'red';
+                td.style.fontWeight = 'bold';
+              }
+            }
+
+            if (key === 'ENTRY_SIGNAL') {
+              const signalMap = {
+                'Under Ult Entry | GOOD profit': 'entry-good',
+                'Under 0 Entry | GOOD profit': 'entry-orange',
+                'Under 0 Entry | MID profit': 'entry-mid-profit',
+                'Near Ult Entry | GOOD profit': 'entry-near-good',
+                'Under Ult Entry | NO profit': 'entry-no-profit',
+                'Near Ult Entry | MID profit': 'entry-near-mid',
+                'Under 0 Entry | NO profit': 'entry-under0-no',
+                'Under Ult Entry | MID profit': 'entry-underult-mid',
+                'AT 0 Entry | GOOD profit': 'entry-at0-good',
+                'AT 0 Entry | MID profit': 'entry-at0-mid',
+                'Near 0 Entry | GOOD profit': 'entry-near0-good',
+                'Neutral Signal': 'entry-neutral'
+              };
+              if (signalMap[cleanValue]) {
+                td.classList.add(signalMap[cleanValue]);
+              } else if (cleanValue.includes('Warning')) {
+                td.classList.add('entry-warning');
+              }
+            }
+
+            if (key === 'TARGET_PRICE') {
+              td.classList.add('target-blue');
+            }
+
+            const match = value.match(/([-+]?\d+(\.\d+)?)%/);
+            if (match) {
+              const percent = parseFloat(match[1]);
+              if (key === 'TARGET_PRICE' && percent > 2) {
+                td.classList.remove('target-blue');
+                td.classList.add('target-darkblue');
+              }
+
+              if (key === 'FIRST_ENTRY_PRICE_0DTE' && percent < 0) {
+                let bgColor = percent >= -0.5 ? '#ffe5cc' :
+                              percent >= -1   ? '#ffcc99' :
+                              percent >= -2   ? '#ff9933' : '#ff6600';
+                td.style.backgroundColor = bgColor;
+                td.style.color = '#000';
+                td.style.fontWeight = 'bold';
+              }
+
+              if (key === 'ULTIMATE_ENTRY_PRICE') {
+                if (percent < 0) {
+                  let bgColor = percent >= -0.5 ? '#eaffea' :
+                                percent >= -1   ? '#caffca' :
+                                percent >= -2   ? '#aaffaa' : '#66ff66';
+                  td.style.backgroundColor = bgColor;
+                  td.style.color = '#000';
+                  td.style.fontWeight = 'bold';
+                } else if (percent >= 0 && percent <= 1.5) {
+                  td.style.backgroundColor = '#ffff99';
+                  td.style.color = '#000';
+                  td.style.fontWeight = 'bold';
+                } else if (percent > 1.5) {
+                  td.style.backgroundColor = '#ffffff';
+                  td.style.color = '#000';
+                }
+              }
+            }
+
+            if (cleanValue.includes('NO Trade')) {
+              td.classList.add('no-trade');
+            }
+
+            tr.appendChild(td);
+          });
+
+          table.appendChild(tr);
+        });
+      });
+  </script>
+
+</body>
+</html>
