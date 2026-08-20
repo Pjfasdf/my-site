@@ -10,35 +10,31 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
     th { background-color: #004085; color: white; }
-    
+
     tr:hover {
       outline: 2px solid magenta;
       background-color: #f0f8ff;
       cursor: pointer;
     }
-    
+
     /* --- Persistent Selection Style --- */
     .active-row {
       outline: 3px solid #ff1493 !important; /* Deep Pink Border */
       position: relative;
     }
-
     /* Visual Indicator (Pin Icon) */
     .active-row td:first-child::before {
       content: "📌 ";
       font-size: 1.2em;
     }
-
     .highlight-ticker { background-color: #cce5ff; color: #004085; font-weight: bold; }
-    .row-diff-near { background-color: #fff9c4; font-weight: bold; } 
-
+    .row-diff-near { background-color: #fff9c4; font-weight: bold; }
     .nav-container {
         margin-bottom: 20px;
         display: flex;
         gap: 15px;
         align-items: center;
     }
-
     button {
         padding: 10px 20px;
         font-size: 16px;
@@ -49,11 +45,8 @@
         border-radius: 5px;
         cursor: pointer;
     }
-
     button:hover { background-color: #002752; }
-
     #counter-display { font-weight: bold; color: #555; font-size: 1.1em; }
-
     #refresh-time {
       position: absolute;
       top: 20px;
@@ -63,28 +56,74 @@
       text-align: right;
       line-height: 1.5;
     }
+    /* --- Macro events banner --- */
+    #macro-banner {
+      margin-bottom: 15px;
+      padding: 10px 14px;
+      background-color: #eef3f8;
+      border: 1px solid #b8cbe0;
+      border-radius: 5px;
+      font-size: 14px;
+      color: #004085;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      align-items: center;
+    }
+    #macro-banner .macro-label {
+      font-weight: bold;
+      color: #333;
+    }
+    #macro-banner .macro-event {
+      white-space: nowrap;
+    }
+    #macro-banner .macro-event.macro-soon {
+      color: #b30000;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-
   <div class="nav-container">
     <h2>Bull Filtered Watchlist</h2>
     <button type="button" onclick="openPrevTicker(event)">❮ Previous</button>
     <button type="button" onclick="openNextTicker(event)">Next ➔</button>
     <span id="counter-display"></span>
   </div>
-
   <div id="refresh-time"></div>
+  <div id="macro-banner"></div>
   <table id="data-table">
     <thead id="table-head"></thead>
     <tbody id="table-body"></tbody>
   </table>
-
   <script>
     const STORAGE_KEY = 'last_clicked_ticker';
     let tickerList = [];
     let currentIndex = -1;
-
+    // --- Date urgency helpers (shared by earnings/ex-div cells and the
+    // macro banner) ---
+    function daysUntil(dateStr) {
+        if (!dateStr) return null;
+        const target = new Date(dateStr);
+        if (isNaN(target.getTime())) return null;
+        const today = new Date(new Date().toISOString().slice(0, 10));
+        return Math.round((target - today) / 86400000);
+    }
+    function urgencyStyle(daysAway) {
+        // Same color language as the diff_pct_to_m column, extended with a
+        // day-counter label. Negative daysAway = already passed (e.g. an
+        // earnings date yfinance hasn't rolled forward to the next quarter
+        // yet) -- shown for transparency, never colored as urgent.
+        if (daysAway === null) return null;
+        if (daysAway < 0) return { bg: '', color: '#888', label: `${-daysAway}d ago` };
+        if (daysAway === 0) return { bg: '#ef9a9a', color: '#7a0000', label: 'today' };
+        if (daysAway === 1) return { bg: '#ef9a9a', color: '#7a0000', label: 'tomorrow' };
+        if (daysAway <= 3) return { bg: '#ffcdd2', color: '#b71c1c', label: `in ${daysAway}d` };
+        if (daysAway <= 7) return { bg: '#ffe0b2', color: '#e65100', label: `in ${daysAway}d` };
+        if (daysAway <= 14) return { bg: '#fff9c4', color: '#666', label: `in ${daysAway}d` };
+        if (daysAway <= 30) return { bg: '#c8e6c9', color: '#1b5e20', label: `in ${daysAway}d` };
+        return { bg: '', color: '#333', label: `in ${daysAway}d` };
+    }
     // --- Timestamp Logic ---
     function setRefreshTime() {
         const refreshTime = new Date();
@@ -93,15 +132,13 @@
         pageRefreshDiv.textContent = 'Last page refresh: ' + refreshTime.toLocaleString();
         refreshDiv.appendChild(pageRefreshDiv);
     }
-
     function loadTimestamp(fileName, displayName) {
         const refreshDiv = document.getElementById('refresh-time');
         const timestampDiv = document.createElement('div');
         timestampDiv.innerHTML = `<strong>${displayName}:</strong> Loading...`;
-        
+
         if (refreshDiv.firstChild) refreshDiv.insertBefore(timestampDiv, refreshDiv.firstChild);
         else refreshDiv.appendChild(timestampDiv);
-
         fetch(fileName + '?' + new Date().getTime())
             .then(response => response.text())
             .then(csv => {
@@ -120,7 +157,6 @@
                 timestampDiv.innerHTML = `<strong>${displayName}:</strong> Error`;
             });
     }
-
     function loadAllTimestamps() {
         document.getElementById('refresh-time').innerHTML = '';
         loadTimestamp('compute_gex_timestamp.csv', 'GEX Compute Time');
@@ -128,7 +164,41 @@
         loadTimestamp('extract_etrade_timestamp.csv', 'E*TRADE Extract Time');
         setRefreshTime();
     }
-
+    // --- Macro events banner ---
+    // Reads macro_events.csv (written by extract_calendar.py -- FOMC
+    // decisions, CPI, and jobs report dates) and shows the next few
+    // upcoming ones. Not ticker-specific, so it's a banner rather than
+    // a table column. Non-fatal if the file is missing/stale -- this
+    // is a nice-to-have, never something that should block the page.
+    function loadMacroEvents() {
+        const banner = document.getElementById('macro-banner');
+        fetch('macro_events.csv?' + new Date().getTime())
+            .then(response => {
+                if (!response.ok) throw new Error('not found');
+                return response.text();
+            })
+            .then(csv => {
+                const rows = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+                const todayStr = new Date().toISOString().slice(0, 10);
+                const upcoming = rows
+                    .filter(r => r.DATE && r.DATE >= todayStr)
+                    .sort((a, b) => a.DATE.localeCompare(b.DATE))
+                    .slice(0, 4);
+                if (upcoming.length === 0) {
+                    banner.style.display = 'none';
+                    return;
+                }
+                banner.innerHTML = '<span class="macro-label">📅 Upcoming:</span>' +
+                    upcoming.map(ev => {
+                        const d = daysUntil(ev.DATE);
+                        const style = urgencyStyle(d) || { bg: '', color: '#333', label: '' };
+                        return `<span class="macro-event" style="background-color:${style.bg || 'transparent'}; color:${style.color}; padding:2px 6px; border-radius:3px;">${ev.EVENT} — ${ev.DATE} (${style.label})</span>`;
+                    }).join('');
+            })
+            .catch(() => {
+                banner.style.display = 'none';
+            });
+    }
     // --- Navigation Logic ---
     function updateCounter() {
         const counterDisplay = document.getElementById('counter-display');
@@ -136,49 +206,41 @@
             counterDisplay.textContent = `(${currentIndex + 1} / ${tickerList.length})`;
         }
     }
-
     function openDashboard(ticker, rowElement) {
         document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
         if (rowElement) rowElement.classList.add('active-row');
         localStorage.setItem(STORAGE_KEY, ticker);
-
         currentIndex = tickerList.indexOf(ticker);
         updateCounter();
-
         window.open(`dashboard.html?ticker=${encodeURIComponent(ticker)}`, 'DashboardPopup', 'width=1400,height=900,scrollbars=yes,resizable=yes');
     }
-
     function openNextTicker(event) {
         if (event) event.preventDefault();
         if (tickerList.length === 0) return;
-        
+
         currentIndex = (currentIndex + 1) % tickerList.length;
         navigateToTicker(tickerList[currentIndex]);
     }
-
     function openPrevTicker(event) {
         if (event) event.preventDefault();
         if (tickerList.length === 0) return;
-        
+
         currentIndex = (currentIndex - 1 + tickerList.length) % tickerList.length;
         navigateToTicker(tickerList[currentIndex]);
     }
-
     function navigateToTicker(ticker) {
         const rows = document.querySelectorAll('#table-body tr');
         let targetRow = null;
         rows.forEach(row => { if (row.cells[0].textContent.trim() === ticker) targetRow = row; });
-
         if (targetRow) {
             openDashboard(ticker, targetRow);
         }
     }
-
     // --- Main Data Loading ---
     function loadBullFilteredData() {
         loadAllTimestamps();
+        loadMacroEvents();
         const lastSelected = localStorage.getItem(STORAGE_KEY);
-
         Promise.all([
             fetch('bull_filtered.csv?' + new Date().getTime()).then(r => r.text()),
             fetch('Tickers.csv?' + new Date().getTime()).then(r => r.text())
@@ -186,7 +248,6 @@
         .then(([bullCsv, tickersCsv]) => {
             const bullData = Papa.parse(bullCsv, { header: true, skipEmptyLines: true }).data;
             const metaDataRaw = Papa.parse(tickersCsv, { header: true, skipEmptyLines: true }).data;
-
             // Map tickers with case-insensitive column lookup
             const metaMap = {};
             metaDataRaw.forEach(item => {
@@ -194,95 +255,81 @@
                 const tickerKey = keys.find(k => k.toUpperCase() === 'TICKER');
                 const trendKey = keys.find(k => k.toUpperCase() === 'TREND');
                 const statusKey = keys.find(k => k.toUpperCase() === 'STATUS');
-
                 if (tickerKey && item[tickerKey]) {
                     const cleanTicker = item[tickerKey].trim().toUpperCase();
                     const trendVal = trendKey ? (item[trendKey] || '').trim() : '';
                     const statusVal = statusKey ? (item[statusKey] || '').trim() : '';
-                    
+
                     metaMap[cleanTicker] = {
                         trend: trendVal !== "" ? trendVal : "-",
                         status: statusVal !== "" ? statusVal : "-"
                     };
                 }
             });
-
             const tableHead = document.getElementById('table-head');
             const tableBody = document.getElementById('table-body');
-            
+
             tableHead.innerHTML = '';
             tableBody.innerHTML = '';
-
             if (bullData.length === 0) return;
-
             tickerList = bullData.map(row => row.TICKER.trim());
-
             // --- Construct Header Row ---
             const headerRow = document.createElement('tr');
             const originalHeaders = Object.keys(bullData[0]);
-            
+
             originalHeaders.forEach((col) => {
                 const th = document.createElement('th');
-                th.textContent = col.replace(/_/g, ' ').toUpperCase(); 
+                th.textContent = col.replace(/_/g, ' ').toUpperCase();
                 headerRow.appendChild(th);
-
                 // Insert Trend and Status headers immediately after TICKER column
                 if (col.toUpperCase() === 'TICKER') {
                     const thTrend = document.createElement('th');
                     thTrend.textContent = 'TREND';
                     headerRow.appendChild(thTrend);
-
                     const thStatus = document.createElement('th');
                     thStatus.textContent = 'STATUS';
                     headerRow.appendChild(thStatus);
                 }
             });
             tableHead.appendChild(headerRow);
-
             // --- Construct Body Rows ---
             bullData.forEach(row => {
                 const tr = document.createElement('tr');
                 const tickerRaw = (row['TICKER'] || '').trim();
                 const tickerLookup = tickerRaw.toUpperCase();
                 const meta = metaMap[tickerLookup] || { trend: '-', status: '-' };
-
                 if (tickerRaw === lastSelected) {
                     tr.classList.add('active-row');
                     currentIndex = tickerList.indexOf(tickerRaw);
                 }
-                
-                tr.onclick = function() { openDashboard(tickerRaw, this); };
 
+                tr.onclick = function() { openDashboard(tickerRaw, this); };
                 Object.entries(row).forEach(([key, value]) => {
                     const td = document.createElement('td');
                     const val = value ? value.trim() : '';
                     const numVal = parseFloat(val);
                     td.textContent = val;
-
                     if (key === 'TICKER') {
                         if (['SPX', 'SPY', 'QQQ', 'IWM'].includes(val.toUpperCase())) td.classList.add('highlight-ticker');
                         td.style.fontWeight = 'bold';
                     }
-
                     if (key === 'CURRENT_PRICE') {
-                        const percentMatch = val.match(/\s\(([-+]?\d+(\.\d+)?)%\)/); 
+                        const percentMatch = val.match(/\s\(([-+]?\d+(\.\d+)?)%\)/);
                         if (percentMatch) {
                             const percent = parseFloat(percentMatch[1]);
                             td.style.color = percent >= 0 ? 'green' : 'red';
                             td.style.fontWeight = 'bold';
                         }
                     }
-
                     if (key === 'diff_pct_support') {
                         td.textContent = numVal.toFixed(2) + '%';
                         td.style.fontWeight = 'bold';
                         if (numVal < 0) { td.style.backgroundColor = '#f3e5f5'; td.style.color = 'red'; }
-                        else if (numVal <= 1) td.style.backgroundColor = '#e1bee7'; 
-                        else if (numVal <= 3) td.style.backgroundColor = '#ce93d8'; 
+                        else if (numVal <= 1) td.style.backgroundColor = '#e1bee7';
+                        else if (numVal <= 3) td.style.backgroundColor = '#ce93d8';
                         else if (numVal <= 5) { td.style.backgroundColor = '#ba68c8'; td.style.color = 'white'; }
                         else { td.style.backgroundColor = '#9c27b0'; td.style.color = 'white'; }
                     }
-
                     if (key === 'diff_pct_to_m') {
                         td.textContent = numVal.toFixed(2) + '%';
                         td.style.fontWeight = 'bold';
@@ -291,13 +338,20 @@
                         else if (numVal <= 10) td.style.backgroundColor = '#ffe0b2';
                         else td.style.backgroundColor = '#ffcdd2';
                     }
-
                     if (key === 'strike_row_diff' && Math.abs(numVal) <= 1) td.classList.add('row-diff-near');
                     if (key === 'lowest_neg_zone_strike') td.style.backgroundColor = '#f3e5f5';
                     if (key === 'lowest_m_strike') td.style.backgroundColor = '#e3f2fd';
-
+                    if ((key === 'NEXT_EARNINGS_DATE' || key === 'NEXT_EX_DIV_DATE') && val) {
+                        const d = daysUntil(val);
+                        const style = urgencyStyle(d);
+                        if (style) {
+                            td.textContent = `${val} (${style.label})`;
+                            if (style.bg) td.style.backgroundColor = style.bg;
+                            td.style.color = style.color;
+                            td.style.fontWeight = 'bold';
+                        }
+                    }
                     tr.appendChild(td);
-
                     // Insert Trend and Status cells immediately after TICKER
                     if (key === 'TICKER') {
                         const tdTrend = document.createElement('td');
@@ -306,9 +360,8 @@
                         // Apply trend coloring
                         if (meta.trend.toUpperCase().includes("BULL")) tdTrend.style.color = "green";
                         else if (meta.trend.toUpperCase().includes("BEAR")) tdTrend.style.color = "red";
-                        
-                        tr.appendChild(tdTrend);
 
+                        tr.appendChild(tdTrend);
                         const tdStatus = document.createElement('td');
                         tdStatus.textContent = meta.status;
                         tdStatus.style.fontWeight = 'bold';
@@ -321,7 +374,6 @@
         })
         .catch(error => console.error('Data Load Error:', error));
     }
-
     loadBullFilteredData();
   </script>
 </body>

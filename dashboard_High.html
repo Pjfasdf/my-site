@@ -5,29 +5,53 @@
   <title>Ticker Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    /* This page's own scrollbar -- hidden visually only. Scrolling still
+       works fully (wheel, keyboard, drag-select, the auto-zoom-to-column
+       feature) via every input method except grabbing the scrollbar
+       thumb itself. Matters most when this page is embedded as one of
+       several iframes side by side (dashboard_multi.html) -- each
+       iframe's own native scrollbar otherwise eats 15-17px of width that
+       could go to an actual data column, and that adds up fast across
+       3+ panes. */
+    html { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar { display: none; }
+    /* Left/right cut to ~1/3 of the original 20px (top/bottom unchanged) --
+       in a narrow multi-pane iframe, that side padding was pure margin
+       eating into the same limited width the table columns compete for. */
+    body {
+      font-family: Arial, sans-serif; padding: 8px 4px;
+      background-color: #707070; color: #eee;
+    }
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 5px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
-    th { 
+    th {
       background-color: #333;
-      color: white; 
-      position: sticky; 
+      color: white;
+      position: sticky;
       z-index: 8;
     }
-    
+ 
     .reduced-height-header {
-      padding: 4px 10px !important; 
-      font-size: 0.9em; 
+      padding: 4px 10px !important;
+      font-size: 0.9em;
     }
-    
+ 
+    /* AVG-0 group (the gray-filled columns) -- tighter horizontal padding
+       and a smaller font shrink these columns' actual rendered width,
+       freeing up space for the columns that matter more in a narrow
+       multi-pane view. A table column's width is set by its WIDEST cell,
+       so this has to apply to the header cells too, not just the data
+       cells, or the header would keep forcing the old wider column. */
+    .narrow-col {
+      padding: 2px !important;
+    }
+ 
     tr:hover {
-        background-color: rgba(255, 0, 255, 0.15) !important; 
+        background-color: rgba(255, 0, 255, 0.15) !important;
     }
-
     tr:hover td, tr:hover th {
         border: 4px solid #FF00FF !important;
     }
-
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #00ffff; }
@@ -40,7 +64,6 @@
     }
     .bold-border-left { border-left: 4px solid black; }
     .bold-border-right { border-right: 4px solid black; }
-
     /* MODAL STYLES */
     #alert-modal {
       display: none;
@@ -51,10 +74,10 @@
       width: 100%;
       height: 100%;
       /* Removed the dark background-color here */
-      background-color: transparent; 
-      /* Allows clicking the table behind the modal if needed, 
+      background-color: transparent;
+      /* Allows clicking the table behind the modal if needed,
          though the content box will override this */
-      pointer-events: none; 
+      pointer-events: none;
     }
     .modal-content {
       background-color: #fff;
@@ -66,7 +89,7 @@
       border-radius: 8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
       /* Re-enable pointer events for the actual alert box */
-      pointer-events: auto; 
+      pointer-events: auto;
     }
     .modal-content h3 { color: #d32f2f; margin-top: 0; }
     .modal-content button {
@@ -81,11 +104,10 @@
   </style>
 </head>
 <body>
-
   <h2 id="title">Details</h2>
-  <p id="refresh-timer" style="margin-top: -10px; font-size: 0.9em; color: #666; font-weight: bold;"></p>
+  <p id="refresh-timer" style="margin-top: -10px; font-size: 0.9em; color: #ccc; font-weight: bold;"></p>
+  <p id="em-legend" style="margin-top: -6px; font-size: 0.9em; display: none;"></p>
   <table id="details-table"></table>
-
   <div id="alert-modal">
     <div class="modal-content">
       <h3 id="modal-title">GEX Alert</h3>
@@ -93,45 +115,106 @@
       <button onclick="closeModal()">Dismiss</button>
     </div>
   </div>
-
   <script>
-    const REFRESH_INTERVAL_MS = 5000; 
+    const REFRESH_INTERVAL_MS = 5000;
     let initialLoadComplete = false;
-
     // --- STATE TRACKING ALERT SYSTEM ---
     let lastKnownStates = {};
-    
+ 
     if (window.Notification && Notification.permission !== "granted") {
         Notification.requestPermission();
     }
-
     function showAlert(title, message) {
         document.getElementById('modal-title').textContent = title;
         document.getElementById('modal-body').textContent = message;
         document.getElementById('alert-modal').style.display = 'block';
     }
-
     function closeModal() {
         document.getElementById('alert-modal').style.display = 'none';
     }
-
     function formatNumber(value) {
         const numberValue = parseFloat(value);
         if (isNaN(numberValue)) return value;
         if (Math.abs(numberValue - Math.round(numberValue)) < 1e-6) return Math.round(numberValue).toString();
-        return numberValue.toString(); 
+        return numberValue.toString();
     }
-
+    // --- Expected move range overlay ---
+    // Reads FRONT_EX_MOVE / BACK_EX_MOVE straight from TOS_rtd.csv --
+    // ThinkOrSwim's own RTD-computed expected move for the front (nearest,
+    // "0DTE") and back (next, "1DTE") expiration. Ported over from
+    // dashboard.html -- same overlay, same source file, same nested-ring
+    // design (thick ring = 2x target strikes, thin ring nested inside it
+    // = 1x straddle-range strikes), drawn on the STRIKE column and the
+    // DTE-specific N/N columns here too.
+    // EM_MULTIPLIER_2X mirrors the "2x expected move" target-strike
+    // convention: applied client-side to TOS's raw 1x move, then snapped
+    // to the nearest actual listed strike, same as the 1x band.
+    // Loaded on its own slower interval since RTD refreshes independently
+    // of the main 5s GEX table poll.
+    const EM_REFRESH_INTERVAL_MS = 60000;
+    const EM_MULTIPLIER_2X = 2.0;
+    // Picked to survive against every background already in play on this
+    // table -- the STRIKE column itself is pure cyan (#00ffff, see
+    // .strike-blue), and the N/N columns sit on pastel blue/gray/purple/
+    // beige/red/green fills.
+    const EM_COLORS = { 0: '#3A07F5', 1: '#9A07F5' }; // 0DTE = vivid blue-violet, 1DTE = vivid purple-magenta (both user-specified)
+    const EM_COLORS_LIGHT = { 0: '#d8cdfd', 1: '#ebcdfd' }; // 0DTE = light blue-violet (matches EM_COLORS[0]), 1DTE = light purple-magenta (matches EM_COLORS[1])
+    let emBounds = {}; // { 0: {price, em1x}, 1: {...} } -- em1x is the raw 1x move; 2x and strike-snapping are derived client-side, see em1xEdges/em2xEdges below
+    function loadExpectedMove() {
+        const legend = document.getElementById('em-legend');
+        fetch('TOS_rtd.csv?' + new Date().getTime())
+            .then(r => r.ok ? r.text() : '')
+            .then(csv => {
+                if (!csv) { emBounds = {}; legend.style.display = 'none'; return; }
+                const rows = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+                const tickerUp = ticker?.trim().toUpperCase();
+                const mine = rows.find(r => (r.TICKER || '').trim().toUpperCase() === tickerUp);
+                const newBounds = {};
+                if (mine) {
+                    const price = parseFloat(mine.CURRENT_PRICE);
+                    const frontMove = parseFloat(mine.FRONT_EX_MOVE);
+                    const backMove = parseFloat(mine.BACK_EX_MOVE);
+                    if (!isNaN(price) && price > 0) {
+                        if (!isNaN(frontMove) && frontMove > 0) newBounds[0] = { price, em1x: frontMove };
+                        if (!isNaN(backMove) && backMove > 0) newBounds[1] = { price, em1x: backMove };
+                    }
+                }
+                emBounds = newBounds;
+                if (Object.keys(emBounds).length === 0) {
+                    legend.style.display = 'none';
+                    return;
+                }
+                legend.style.display = 'block';
+                legend.innerHTML = [0, 1].map(d => {
+                    if (!emBounds[d]) return '';
+                    const b = emBounds[d];
+                    const label = d === 0 ? 'Nearest exp. (FRONT_EX_MOVE)' : 'Next exp. (BACK_EX_MOVE)';
+                    const inner1x = `${(b.price - b.em1x).toFixed(2)} – ${(b.price + b.em1x).toFixed(2)}`;
+                    const outer2x = `${(b.price - b.em1x * EM_MULTIPLIER_2X).toFixed(2)} – ${(b.price + b.em1x * EM_MULTIPLIER_2X).toFixed(2)}`;
+                    return `<span style="margin-right: 18px;">` +
+                        `<span style="color:${EM_COLORS[d]}; font-weight:bold;">&#9632;</span> ` +
+                        `<b>${label}:</b> ` +
+                        `<span style="color:${EM_COLORS[d]};">thin ring/inner band ±1x (${inner1x})</span>, ` +
+                        `<span style="color:${EM_COLORS_LIGHT[d]}; background:#333; padding:0 3px;">thick ring/outer band ±2x (${outer2x})</span>` +
+                        `</span>`;
+                }).join('');
+            })
+            .catch(() => { emBounds = {}; legend.style.display = 'none'; });
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const ticker = urlParams.get('ticker');
     document.getElementById('title').textContent = `Details for ${ticker}`;
     const table = document.getElementById('details-table');
     const refreshTimerEl = document.getElementById('refresh-timer');
-
     function refreshDashboard() {
-        const scrollPosition = window.scrollY; 
-        
-        fetch('dashboard_High.csv?' + new Date().getTime(), { cache: 'no-store' }) 
+        // Table rebuilds fully every cycle -- capture BOTH axes so a
+        // horizontal scroll (manual, or the auto-zoom-to-N/N-1DTE-column
+        // below) survives the next refresh instead of snapping back to
+        // the leftmost column every 5 seconds.
+        const scrollPositionX = window.scrollX;
+        const scrollPositionY = window.scrollY;
+ 
+        fetch('dashboard_High.csv?' + new Date().getTime(), { cache: 'no-store' })
           .then(response => {
             if (!response.ok) throw new Error(`File network failed: ${response.status}`);
             return response.text();
@@ -140,20 +223,96 @@
             const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
             const rawData = results.data;
             const data = rawData.filter(row => row.TICKER?.trim().toUpperCase() === ticker?.trim().toUpperCase());
-            
+ 
             if (data.length === 0) {
               if (initialLoadComplete) return;
               table.innerHTML = '<tr><td>No data found for this ticker.</td></tr>';
               return;
             }
-
-            const fragment = document.createDocumentFragment(); 
+            const fragment = document.createDocumentFragment();
             const lastTimestamp = rawData[0]['EXECUTION_TIME_STAMP'] || 'N/A';
             refreshTimerEl.textContent = `Last Data Refresh: ${lastTimestamp}`;
-            
+ 
             let currStrike = null;
             data.forEach(row => { if (row['CURR'] === 'CURR') currStrike = parseFloat(row['STRIKE']); });
-            
+ 
+            // Snap the raw TOS RTD 1x move (and the 2x target derived from
+            // it) to the nearest actual listed strike, same approach used
+            // in dashboard.html. 1x is mathematically always nested inside
+            // 2x (EM_1X < 2 * EM_1X for any positive move), so "inner
+            // band" is guaranteed to make sense, not just a visual
+            // assumption.
+            const nearestStrikeTo = (target) => {
+                let nearest = null, nearestDiff = Infinity;
+                data.forEach(row => {
+                    const s = parseFloat(row['STRIKE']);
+                    if (isNaN(s)) return;
+                    const diff = Math.abs(s - target);
+                    if (diff < nearestDiff) { nearestDiff = diff; nearest = s; }
+                });
+                return nearest;
+            };
+            const em1xEdges = {};
+            const em2xEdges = {};
+            [0, 1].forEach(d => {
+                const b = emBounds[d];
+                if (!b || isNaN(b.price) || isNaN(b.em1x)) return;
+                em1xEdges[d] = {
+                    lower: nearestStrikeTo(b.price - b.em1x),
+                    upper: nearestStrikeTo(b.price + b.em1x),
+                };
+                em2xEdges[d] = {
+                    lower: nearestStrikeTo(b.price - b.em1x * EM_MULTIPLIER_2X),
+                    upper: nearestStrikeTo(b.price + b.em1x * EM_MULTIPLIER_2X),
+                };
+            });
+            // Shared marker for both the STRIKE column (always visible, no
+            // horizontal scrolling needed) and the N/N columns under each
+            // DTE's own super-header. Nested design: a thick solid ring at
+            // the 2x target strikes (the outer band), a thinner solid ring
+            // at the narrower 1x straddle-price strikes nested inside it,
+            // a bold stripe filling the 1x band, and a faint stripe
+            // filling the rest of the 2x band outside that. All drawn as
+            // box-shadow so 0DTE (hot pink/magenta) and 1DTE (indigo-blue)
+            // markers can stack on the same cell without one overwriting
+            // the other the way a plain CSS border would.
+            function expectedMoveShadow(strike, onlyDte) {
+                // onlyDte omitted/null -> draw both DTEs' markers (used for
+                // the shared STRIKE column, which applies to every
+                // expiration). onlyDte 0 or 1 -> draw only that expiration's
+                // marker (used for the _0/_1 N/N columns, each of which
+                // belongs to one specific expiration and shouldn't also echo
+                // the other DTE's band).
+                const shadows = [];
+                const dtesToDraw = (onlyDte === 0 || onlyDte === 1) ? [onlyDte] : [0, 1];
+                dtesToDraw.forEach(d => {
+                    const b2 = em2xEdges[d];
+                    const b1 = em1xEdges[d];
+                    if (!b2 || !b1 || isNaN(strike)) return;
+                    const color = EM_COLORS[d];
+                    const colorLight = EM_COLORS_LIGHT[d];
+                    const sideInset = d === 0 ? '9px 0 0' : '-9px 0 0';
+                    // Plain color, no outline -- the current palette (vivid
+                    // blue-violet/purple) is dark and saturated enough on
+                    // its own; a black outline added earlier for contrast
+                    // against the old orange is no longer needed and just
+                    // reads as an extra shadow, so it's been dropped.
+                    // 1x (the nearer, more likely band) is drawn BOLDER than
+                    // 2x (the further, less likely band) -- a thicker ring
+                    // at the 1x edge, a thinner one at the 2x edge.
+                    if (strike === b1.upper || strike === b1.lower) {
+                        shadows.push(`inset 0 0 0 7px ${color}`);
+                    } else if (strike === b2.upper || strike === b2.lower) {
+                        shadows.push(`inset 0 0 0 4px ${color}`);
+                    } else if (strike > b1.lower && strike < b1.upper) {
+                        shadows.push(`inset ${sideInset} ${color}`);
+                    } else if (strike > b2.lower && strike < b2.upper) {
+                        shadows.push(`inset ${sideInset} ${colorLight}`);
+                    }
+                });
+                return shadows.length ? shadows.join(', ') : null;
+            }
+ 
             const gradientCols = ['NUMBER_OF_M_TOTAL_AVG_0', 'NUMBER_OF_1_TOTAL_AVG_0', 'NUMBER_OF_M_TOTAL_AVG', 'NUMBER_OF_1_TOTAL_AVG'];
             let maxSummaryValue = 0;
             gradientCols.forEach(col => {
@@ -162,17 +321,22 @@
                 if (!isNaN(val)) maxSummaryValue = Math.max(maxSummaryValue, Math.abs(val));
               });
             });
-
             let columns = Object.keys(data[0]);
-            
+ 
             const exclude = [
-                'CURRENT_PRICE', 'PERCENT_CHANGE', 'CURR', 'TICKER', 'PRICE_FLOOR', 
-                'EXECUTION_TIME_STAMP', 'DTE_STRING_AVG', 
+                'CURRENT_PRICE', 'PERCENT_CHANGE', 'CURR', 'TICKER', 'PRICE_FLOOR',
+                'EXECUTION_TIME_STAMP', 'DTE_STRING_AVG',
                 'DTE_STRING_AVG0', 'DTE_STRING_0', 'DTE_STRING_1', 'DEX_1',
-                'DEX_AVG', 'DEX_AVG0', 'DEX_0'
+                'DEX_AVG', 'DEX_AVG0', 'DEX_0',
+                // Models (AVG Model / AVG-0 Model) columns -- not currently
+                // used, and dropping them frees up meaningful horizontal
+                // width, which matters most in a narrow multi-pane view
+                // where every column counts toward whether the 1DTE N/N
+                // column is reachable without scrolling at all.
+                'NUMBER_OF_M_TOTAL_AVG', 'NUMBER_OF_1_TOTAL_AVG',
+                'NUMBER_OF_M_TOTAL_AVG_0', 'NUMBER_OF_1_TOTAL_AVG_0'
             ];
             columns = columns.filter(col => !exclude.includes(col));
-
             const pCIdx = columns.indexOf('PRICE_CEILING');
             const strikeIdx = columns.indexOf('STRIKE');
             if (pCIdx !== -1 && strikeIdx !== -1) {
@@ -180,7 +344,6 @@
                 const newStrikeIdx = columns.indexOf('STRIKE');
                 columns.splice(newStrikeIdx + 1, 0, col);
             }
-
             const cols0 = columns.filter(c => c.endsWith('_0') && !c.startsWith('NUMBER_OF'));
             const cols1 = columns.filter(c => c.endsWith('_1'));
             if (cols0.length > 0 && cols1.length > 0) {
@@ -192,7 +355,6 @@
                     columns.splice(newFirst0 + cols0.length, 0, ...removed1);
                 }
             }
-
             const oiVolGroups = [
               ['GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG', 'NEG_NEG_OI_VOL_AVG'],
               ['GEX_OI_VOL_AVG0', 'ZONE_OI_VOL_AVG0', 'POWER_OI_VOL_AVG0', 'NEG_NEG_OI_VOL_AVG0'],
@@ -205,31 +367,27 @@
               ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0'],
               ['GEX_OI_1', 'ZONE_OI_1', 'POWER_OI_1', 'NEG_NEG_OI_1']
             ];
-
             const zoneCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_1', 'ZONE_OI_VOL_0', 'ZONE_OI_AVG', 'ZONE_OI_AVG0', 'ZONE_OI_1', 'ZONE_OI_0'];
             const negNegOiCols = ['NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG', 'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0', 'NEG_NEG_OI_VOL_1', 'NEG_NEG_OI_1', 'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0'];
             const powerOiCols = ['POWER_OI_VOL_AVG', 'POWER_OI_AVG', 'POWER_OI_VOL_AVG0', 'POWER_OI_AVG0', 'POWER_OI_VOL_1', 'POWER_OI_1', 'POWER_OI_VOL_0', 'POWER_OI_0'];
             const gexOiBarCols = ['GEX_OI_VOL_AVG', 'GEX_OI_AVG', 'GEX_OI_VOL_AVG0', 'GEX_OI_AVG0', 'GEX_OI_VOL_1', 'GEX_OI_1', 'GEX_OI_VOL_0', 'GEX_OI_0'];
-
             const maxValues = {};
             gexOiBarCols.forEach(col => {
               maxValues[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
             });
-
             // HEADER CONSTRUCTION
             const topRow = document.createElement('tr');
             const thT = document.createElement('th');
             const normT = ticker?.trim().toUpperCase();
             const colors = { 'SPX': '#007bff', 'SPY': '#ff00ff', 'QQQ': '#ff9900' };
             thT.textContent = normT;
-            thT.colSpan = columns.length; 
+            thT.colSpan = columns.length;
             thT.style.backgroundColor = colors[normT] || '#3cb371';
-            thT.style.color = 'black'; 
+            thT.style.color = 'black';
             thT.style.fontSize = '20px';
             thT.style.top = '0px'; thT.style.zIndex = 11;
             topRow.appendChild(thT);
             fragment.appendChild(topRow);
-
             const superRow = document.createElement('tr');
             const createSH = (text, span, color, z = 10, textColor = 'black') => {
                 const th = document.createElement('th');
@@ -239,26 +397,28 @@
                 th.classList.add('reduced-height-header');
                 return th;
             };
-
             const countSfx = (sfx) => columns.filter(c => c.endsWith(sfx) && !c.startsWith('NUMBER_OF')).length;
             const modelSpan = columns.filter(c => c.startsWith('NUMBER_OF')).length;
-
             superRow.appendChild(createSH('', 2, '#333'));
             superRow.appendChild(createSH('AVG', countSfx('_AVG'), '#90caf9'));
             superRow.appendChild(createSH('AVG-0', countSfx('_AVG0'), '#d3d3d3'));
             superRow.appendChild(createSH('0', countSfx('_0'), '#d1c4e9'));
-            superRow.appendChild(createSH('1', countSfx('_1'), '#fff3e0')); 
-            superRow.appendChild(createSH('Models', modelSpan, '#424242', 10, 'white'));
+            superRow.appendChild(createSH('1', countSfx('_1'), '#fff3e0'));
+            // colSpan=0 isn't valid HTML (browsers clamp it to 1, which
+            // would draw an empty "Models" header cell floating with no
+            // data columns under it) -- skip the header entirely once the
+            // Models columns are excluded above and modelSpan is 0.
+            if (modelSpan > 0) superRow.appendChild(createSH('Models', modelSpan, '#424242', 10, 'white'));
             fragment.appendChild(superRow);
-
             const midRow = document.createElement('tr');
             let i = 0;
             while (i < columns.length) {
               const col = columns[i];
               const th = document.createElement('th');
               th.style.top = '38px'; th.style.zIndex = 9; th.classList.add('reduced-height-header');
+              if (col.endsWith('_AVG0')) th.classList.add('narrow-col');
               const findGroup = (groups, label) => {
-                for (const g of groups) { 
+                for (const g of groups) {
                   const actualGroup = g.filter(gc => columns.includes(gc));
                   if (actualGroup.length > 0 && col === actualGroup[0]) {
                     th.textContent = label; th.colSpan = actualGroup.length;
@@ -281,11 +441,11 @@
               midRow.appendChild(th); i++;
             }
             fragment.appendChild(midRow);
-
             const headRow = document.createElement('tr');
             columns.forEach(col => {
               const th = document.createElement('th');
               th.style.top = '56px';
+              if (col.endsWith('_AVG0')) th.classList.add('narrow-col');
               if (col.includes('GEX')) th.textContent = 'GEX';
               else if (col.includes('ZONE')) { th.textContent = 'Z'; th.style.fontSize = '18px'; }
               else if (col.includes('POWER')) th.textContent = 'P';
@@ -300,23 +460,20 @@
               headRow.appendChild(th);
             });
             fragment.appendChild(headRow);
-
             // DATA ROWS
             data.forEach(row => {
               const tr = document.createElement('tr');
-              
-              if (row['CURR'] === 'CURR') { 
-                  tr.classList.add('curr-border-row'); 
-
+              const thisStrike = parseFloat(row['STRIKE']);
+ 
+              if (row['CURR'] === 'CURR') {
+                  tr.classList.add('curr-border-row');
                   const triggerValues = ['M', '+', '-', 'M+', 'M-'];
                   const currentZone = (row['ZONE_OI_VOL_0'] || '').trim();
                   const stateKey = `${ticker}_${row['STRIKE']}`;
-
                   if (triggerValues.includes(currentZone) && lastKnownStates[stateKey] !== currentZone) {
-                      lastKnownStates[stateKey] = currentZone; 
+                      lastKnownStates[stateKey] = currentZone;
                       const alertTitle = `New GEX Signal: ${ticker}`;
                       const alertBody = `Strike ${row['STRIKE']} is now Zone ${currentZone}.`;
-
                       if (window.Notification && Notification.permission === "granted") {
                           new Notification(alertTitle, { body: alertBody });
                       } else {
@@ -326,13 +483,12 @@
                       lastKnownStates[stateKey] = null;
                   }
               }
-              
+ 
               columns.forEach(key => {
                 const td = document.createElement('td');
                 let val = row[key];
                 const isModelCol = key.startsWith('NUMBER_OF_M_TOTAL') || key.startsWith('NUMBER_OF_1_TOTAL');
                 if (powerOiCols.includes(key)) val = formatNumber(val);
-
                 if (gradientCols.includes(key) && !isModelCol) {
                   const num = parseFloat(val);
                   if (!isNaN(num) && num !== 0) {
@@ -352,10 +508,9 @@
                     }
                   } else { val = ''; }
                 }
-
                 if (isModelCol) {
                     const num = parseFloat(val);
-                    if (isNaN(num) || num === 0) { val = ''; } 
+                    if (isNaN(num) || num === 0) { val = ''; }
                     else {
                         if (key.includes('NUMBER_OF_1')) {
                             const s = parseFloat(row['STRIKE']);
@@ -365,15 +520,25 @@
                         } else { val = (key.includes('AVG_0') ? 'MS-' : 'M-') + val; }
                     }
                 }
-
                 td.textContent = val;
+                // MID (PRICE_CEILING) is the only column with no explicit
+                // background of its own -- it was showing white only
+                // because it fell through to the page's own (previously
+                // white) background. Pin it explicitly now that the page
+                // background is medium dark gray, so it stays white
+                // regardless.
+                if (key === 'PRICE_CEILING') { td.style.backgroundColor = 'white'; td.style.color = 'black'; }
                 if (key === 'PRICE_CEILING' || key.includes('NEG_NEG')) td.classList.add('bold-border-right');
                 if (key.includes('DEX') || key.startsWith('NUMBER_OF_M')) td.classList.add('bold-border-left');
-                if (key === 'STRIKE') { td.classList.add('strike-blue'); td.style.fontWeight = 'bold'; }
-                
+                if (key === 'STRIKE') {
+                    td.classList.add('strike-blue'); td.style.fontWeight = 'bold'; td.style.color = 'black';
+                    const emShadow = expectedMoveShadow(thisStrike);
+                    if (emShadow) td.style.boxShadow = emShadow;
+                }
+ 
                 if (!isModelCol) {
                     if (key.endsWith('_AVG')) { td.style.backgroundColor = oiVolGroups[0].includes(key) ? '#64b5f6' : '#90caf9'; td.style.color = 'black'; }
-                    if (key.endsWith('_AVG0')) { td.style.backgroundColor = oiVolGroups[1].includes(key) ? '#b0b0b0' : '#d3d3d3'; td.style.color = 'black'; }
+                    if (key.endsWith('_AVG0')) { td.style.backgroundColor = oiVolGroups[1].includes(key) ? '#b0b0b0' : '#d3d3d3'; td.style.color = 'black'; td.classList.add('narrow-col'); }
                     if (key.endsWith('_1')) { td.style.backgroundColor = oiVolGroups[3].includes(key) ? '#e9e2c3' : '#fff3e0'; td.style.color = 'black'; }
                     if (key.endsWith('_0')) {
                         const alreadyStyled = td.style.backgroundColor || td.classList.contains('strike-blue');
@@ -392,7 +557,27 @@
                     }
                     if (negNegOiCols.includes(key)) {
                         if (!isNaN(parseFloat(val))) { td.style.backgroundColor='#ccffcc'; td.style.color='black'; td.style.fontWeight='bold'; }
-                        else if (val.trim()==='N/N') { td.style.backgroundColor='#f25649'; td.style.color='white'; td.style.fontWeight='bold'; }
+                        else if (val.trim()==='N/N') { td.style.backgroundColor='#fbc4be'; td.style.color='black'; td.style.fontWeight='bold'; }
+                        // Expected-move range overlay -- only the N/N columns
+                        // that belong to the 0DTE/1DTE super-headers (the ones
+                        // whose value echoes STRIKE) get marked; the AVG/AVG-0
+                        // N/N columns are left alone since expected move is
+                        // only meaningful for a specific expiration.
+                        if (key === 'NEG_NEG_OI_VOL_0' || key === 'NEG_NEG_OI_0' || key === 'NEG_NEG_OI_VOL_1' || key === 'NEG_NEG_OI_1') {
+                            const colDte = key.endsWith('_0') ? 0 : 1;
+                            const emShadow = expectedMoveShadow(thisStrike, colDte);
+                            if (emShadow) td.style.boxShadow = emShadow;
+                        }
+                        // Marks the one cell the page auto-scrolls/zooms to
+                        // on first load: the current-price row's N/N column
+                        // under the "1" (1DTE) OI group specifically (not
+                        // OI+VOL, not AVG/AVG-0) -- this is the column most
+                        // relevant to the near-term GEX read, and the one
+                        // otherwise buried off-screen to the right in a
+                        // narrow multi-pane view.
+                        if (key === 'NEG_NEG_OI_1' && row['CURR'] === 'CURR') {
+                            td.classList.add('zoom-anchor');
+                        }
                     }
                     if (powerOiCols.includes(key)) {
                         const pMap = { '1':'red', '2':'#0A5AF2', '3':'#5985D9', '4':'#85ABF2', '5':'#A2BEF2' };
@@ -402,23 +587,50 @@
                     else if (val.trim()==='+') { td.style.backgroundColor='#39ff14'; td.style.fontWeight='bold'; }
                     else if (val.trim()==='-') { td.style.backgroundColor='red'; td.style.color=zoneCols.includes(key)?'black':'green'; td.style.fontWeight='bold'; }
                 }
-
                 tr.appendChild(td);
               });
               fragment.appendChild(tr);
             });
             table.innerHTML = ''; table.appendChild(fragment);
-            
+ 
+            // The 4 sticky header rows were using hardcoded pixel offsets
+            // (0/20/38/56) for their `top` value, guessed once for one
+            // specific font-size/padding combination. Any later change to
+            // header content, font sizing, or padding (or just a different
+            // browser's text metrics) throws that off -- the title row's
+            // real height doesn't equal 20px, so the next row down (locked
+            // at top:20px, but drawn UNDER the title row's higher z-index)
+            // gets its top edge visually clipped by the title row when
+            // both are pinned during a scroll. Measuring each row's actual
+            // rendered height here and stacking the offsets from that,
+            // instead of a fixed guess, keeps the header rows cleanly
+            // stacked no matter what.
+            let stickyOffset = 0;
+            [topRow, superRow, midRow, headRow].forEach(row => {
+                Array.from(row.children).forEach(th => { th.style.top = stickyOffset + 'px'; });
+                stickyOffset += row.getBoundingClientRect().height;
+            });
+ 
             const currRowEl = table.querySelector('.curr-border-row');
-            if (!initialLoadComplete && currRowEl) {
-              setTimeout(() => { currRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 0);
-            } else { window.scrollTo(0, scrollPosition); }
+            // Prefer the CURR row's N/N (1DTE OI) cell so the initial
+            // scroll centers BOTH axes at once -- vertically on the
+            // current-price row (as before) and horizontally on that
+            // column, instead of landing at the leftmost STRIKE column
+            // the way scrollIntoView on the whole (very wide) <tr> would.
+            // Falls back to the plain row if that column isn't present
+            // for some reason (e.g. this DTE has no data yet).
+            const zoomAnchorEl = table.querySelector('.zoom-anchor') || currRowEl;
+            if (!initialLoadComplete && zoomAnchorEl) {
+              setTimeout(() => { zoomAnchorEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); }, 0);
+            } else { window.scrollTo(scrollPositionX, scrollPositionY); }
             initialLoadComplete = true;
           })
           .catch(err => console.warn('Refresh skipped:', err.message));
     }
     refreshDashboard();
     setInterval(refreshDashboard, REFRESH_INTERVAL_MS);
+    loadExpectedMove();
+    setInterval(loadExpectedMove, EM_REFRESH_INTERVAL_MS);
   </script>
 </body>
 </html>

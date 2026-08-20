@@ -8,26 +8,24 @@
     body { font-family: Arial, sans-serif; padding: 20px; }
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 5px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
-    th { 
+    th {
       background-color: #333;
-      color: white; 
-      position: sticky; 
+      color: white;
+      position: sticky;
       z-index: 8;
     }
-    
+ 
     .reduced-height-header {
-      padding: 4px 10px !important; 
-      font-size: 0.9em; 
+      padding: 4px 10px !important;
+      font-size: 0.9em;
     }
-    
+ 
     tr:hover {
-        background-color: rgba(255, 0, 255, 0.15) !important; 
+        background-color: rgba(255, 0, 255, 0.15) !important;
     }
-
     tr:hover td, tr:hover th {
         border: 4px solid #FF00FF !important;
     }
-
     .light-blue { background-color: #e0f7ff; }
     .light-gray { background-color: #f0f0f0; }
     .strike-blue { background-color: #00ffff; }
@@ -40,32 +38,65 @@
     }
     .bold-border-left { border-left: 4px solid black; }
     .bold-border-right { border-right: 4px solid black; }
+    /* --- News & Events panel (extract_events.py: news_headlines.csv / sec_events.csv) --- */
+    #news-events-panel {
+      display: none;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+    .ne-col {
+      flex: 1;
+      background-color: #f7f7f7;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px 14px;
+      max-height: 220px;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    .ne-col-title {
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .ne-item {
+      padding: 6px 4px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 13px;
+      text-align: left;
+    }
+    .ne-item:last-child { border-bottom: none; }
+    .ne-item a { color: #004085; text-decoration: none; font-weight: bold; }
+    .ne-item a:hover { text-decoration: underline; }
+    .ne-meta { color: #666; font-size: 12px; margin-top: 2px; }
+    .ne-highlight { border-left: 4px solid #f5a623; padding-left: 8px; }
+    .ne-empty { color: #999; font-style: italic; font-size: 13px; text-align: left; }
   </style>
 </head>
 <body>
-
   <h2 id="title">Details</h2>
   <p id="refresh-timer" style="margin-top: -10px; font-size: 0.9em; color: #666; font-weight: bold;"></p>
+  <p id="em-legend" style="margin-top: -6px; font-size: 0.9em; display: none;"></p>
+  <p id="earnings-banner" style="margin-top: -6px; margin-bottom: 8px; font-size: 0.95em; font-weight: bold; padding: 5px 12px; border-radius: 4px; display: none;"></p>
+  <div id="news-events-panel"></div>
   <table id="details-table"></table>
-
   <script>
-    const REFRESH_INTERVAL_MS = 5000; 
+    const REFRESH_INTERVAL_MS = 5000;
+    const NEWS_EVENTS_REFRESH_INTERVAL_MS = 60000; // news/SEC filings don't change second-to-second like the GEX table
     let initialLoadComplete = false;
-    let metaData = { trend: '', status: '' }; 
-
+    let metaData = { trend: '', status: '' };
     function formatNumber(value) {
         const numberValue = parseFloat(value);
         if (isNaN(numberValue)) return value;
         if (Math.abs(numberValue - Math.round(numberValue)) < 1e-6) return Math.round(numberValue).toString();
-        return numberValue.toString(); 
+        return numberValue.toString();
     }
-
     const urlParams = new URLSearchParams(window.location.search);
     const ticker = urlParams.get('ticker');
     document.getElementById('title').textContent = `Details for ${ticker}`;
     const table = document.getElementById('details-table');
     const refreshTimerEl = document.getElementById('refresh-timer');
-
     function loadTickerMeta() {
         return fetch('Tickers.csv?' + new Date().getTime())
             .then(r => r.text())
@@ -84,13 +115,236 @@
             })
             .catch(err => console.error("Error loading Tickers.csv", err));
     }
-
+    // --- News & Events panel ---
+    // Reads news_headlines.csv and sec_events.csv (both written by
+    // extract_events.py), filters to this ticker, and renders two small
+    // scrollable lists. Loaded on its own slower interval since this data
+    // only changes whenever extract_events.py is run, not every 5s like
+    // the GEX table above. Non-fatal if either file is missing -- the
+    // panel just hides itself rather than blocking the rest of the page.
+    function daysAgo(dateStr) {
+        if (!dateStr) return null;
+        const target = new Date(dateStr);
+        if (isNaN(target.getTime())) return null;
+        const today = new Date(new Date().toISOString().slice(0, 10));
+        const targetDay = new Date(target.toISOString().slice(0, 10));
+        return Math.round((today - targetDay) / 86400000);
+    }
+    function recencyStyle(days) {
+        if (days === null) return { bg: '', label: '' };
+        if (days <= 0) return { bg: '#c8e6c9', label: 'today' };
+        if (days === 1) return { bg: '#c8e6c9', label: 'yesterday' };
+        if (days <= 7) return { bg: '#fff9c4', label: `${days}d ago` };
+        if (days <= 30) return { bg: '#f0f0f0', label: `${days}d ago` };
+        return { bg: '', label: `${days}d ago` };
+    }
+    // --- Expected move range overlay ---
+    // Reads FRONT_EX_MOVE / BACK_EX_MOVE straight from TOS_rtd.csv --
+    // ThinkOrSwim's own RTD-computed expected move for the front (nearest,
+    // "0DTE") and back (next, "1DTE") expiration -- instead of the earlier
+    // approach of having expected_move_screener.py read E*Trade's ATM
+    // call/put ask and compute a straddle by hand. TOS's own number is
+    // simpler (one file, one column, no separate script to keep running)
+    // and more available (it populated premarket in testing, whereas the
+    // E*Trade ATM-straddle approach needs a live ask on both ATM legs,
+    // which frequently isn't there before the open).
+    // EM_MULTIPLIER_2X mirrors the "2x expected move" target-strike
+    // convention expected_move_screener.py used to compute server-side --
+    // now applied client-side directly to TOS's raw 1x move, then snapped
+    // to the nearest actual listed strike the same way the 1x band always
+    // was (see the em1xEdges/em2xEdges search below).
+    // Brackets the strikes that fall within +/- that move of current
+    // price, for the nearest and next expiration. Drawn as an outline on
+    // the N/N (NEG_NEG_OI) columns for that DTE, since those columns
+    // already echo the strike value in every DTE group -- reusing them
+    // avoids adding yet another column to an already very wide table.
+    // Loaded on its own slower interval since RTD refreshes independently
+    // of the main 5s GEX table poll.
+    const EM_REFRESH_INTERVAL_MS = 60000;
+    const EM_MULTIPLIER_2X = 2.0;
+    // Picked to survive against every background already in play on this
+    // table -- the STRIKE column itself is pure cyan (#00ffff, see
+    // .strike-blue), and the N/N columns sit on pastel blue/gray/purple/
+    // beige/red/green fills. EM_COLORS marks the 1x (inner) band -- a
+    // darker, more saturated shade for both DTEs -- while EM_COLORS_LIGHT
+    // marks the 2x (outer) band with a lighter tint of the same hue, so
+    // the two nested rings/stripes read as "same color family, different
+    // intensity" per DTE rather than needing 4 unrelated colors.
+    const EM_COLORS = { 0: '#f24302', 1: '#1a237e' }; // 0DTE = bright, pronounced orange (user-specified), 1DTE = dark indigo
+    const EM_COLORS_LIGHT = { 0: '#ffe0b2', 1: '#c5cae9' }; // 0DTE = light orange, 1DTE = light indigo
+    let emBounds = {}; // { 0: {price, em1x}, 1: {...} } -- em1x is the raw 1x move; 2x and strike-snapping are derived client-side, see em1xEdges/em2xEdges below
+    function loadExpectedMove() {
+        const legend = document.getElementById('em-legend');
+        fetch('TOS_rtd.csv?' + new Date().getTime())
+            .then(r => r.ok ? r.text() : '')
+            .then(csv => {
+                if (!csv) { emBounds = {}; legend.style.display = 'none'; return; }
+                const rows = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+                const tickerUp = ticker?.trim().toUpperCase();
+                const mine = rows.find(r => (r.TICKER || '').trim().toUpperCase() === tickerUp);
+                const newBounds = {};
+                if (mine) {
+                    const price = parseFloat(mine.CURRENT_PRICE);
+                    const frontMove = parseFloat(mine.FRONT_EX_MOVE);
+                    const backMove = parseFloat(mine.BACK_EX_MOVE);
+                    if (!isNaN(price) && price > 0) {
+                        if (!isNaN(frontMove) && frontMove > 0) newBounds[0] = { price, em1x: frontMove };
+                        if (!isNaN(backMove) && backMove > 0) newBounds[1] = { price, em1x: backMove };
+                    }
+                }
+                emBounds = newBounds;
+                if (Object.keys(emBounds).length === 0) {
+                    legend.style.display = 'none';
+                    return;
+                }
+                legend.style.display = 'block';
+                legend.innerHTML = [0, 1].map(d => {
+                    if (!emBounds[d]) return '';
+                    const b = emBounds[d];
+                    const label = d === 0 ? 'Nearest exp. (FRONT_EX_MOVE)' : 'Next exp. (BACK_EX_MOVE)';
+                    const inner1x = `${(b.price - b.em1x).toFixed(2)} – ${(b.price + b.em1x).toFixed(2)}`;
+                    const outer2x = `${(b.price - b.em1x * EM_MULTIPLIER_2X).toFixed(2)} – ${(b.price + b.em1x * EM_MULTIPLIER_2X).toFixed(2)}`;
+                    return `<span style="margin-right: 18px;">` +
+                        `<span style="color:${EM_COLORS[d]}; font-weight:bold;">&#9632;</span> ` +
+                        `<b>${label}:</b> ` +
+                        `<span style="color:${EM_COLORS[d]};">thin ring/inner band ±1x (${inner1x})</span>, ` +
+                        `<span style="color:${EM_COLORS_LIGHT[d]}; background:#333; padding:0 3px;">thick ring/outer band ±2x (${outer2x})</span>` +
+                        `</span>`;
+                }).join('');
+            })
+            .catch(() => { emBounds = {}; legend.style.display = 'none'; });
+    }
+    // --- Earnings date banner ---
+    // Reads calendar_events.csv (written by extract_calendar.py --
+    // TICKER, NEXT_EARNINGS_DATE, EPS_ESTIMATE, NEXT_EX_DIV_DATE), finds
+    // this ticker's next confirmed earnings date, and shows a color-coded
+    // banner that gets more alarming the closer the date is -- since an
+    // options position can behave very differently once IV crush / an
+    // earnings gap is imminent. ETFs/indexes have no earnings at all
+    // (expected, not an error) and simply hide the banner, same tolerant
+    // pattern as the expected-move legend above.
+    const EARNINGS_REFRESH_INTERVAL_MS = 60000; // calendar_events.csv is same-day-cached upstream, no need to poll fast
+    function earningsUrgency(daysUntil) {
+        // Tuned around how options behave into an earnings date: IV
+        // typically starts really ramping in the final week, and the
+        // gap risk itself only exists on/after the print.
+        if (daysUntil <= 1) return { bg: '#ff1744', fg: 'white', label: daysUntil === 0 ? 'TODAY' : 'TOMORROW' };
+        if (daysUntil <= 3) return { bg: '#ff5252', fg: 'white', label: `in ${daysUntil}d` };
+        if (daysUntil <= 7) return { bg: '#ff9800', fg: 'black', label: `in ${daysUntil}d` };
+        if (daysUntil <= 14) return { bg: '#fff176', fg: 'black', label: `in ${daysUntil}d` };
+        return { bg: '#c8e6c9', fg: 'black', label: `in ${daysUntil}d` };
+    }
+    function loadEarnings() {
+        const banner = document.getElementById('earnings-banner');
+        fetch('calendar_events.csv?' + new Date().getTime())
+            .then(r => r.ok ? r.text() : '')
+            .then(csv => {
+                if (!csv) { banner.style.display = 'none'; return; }
+                const rows = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+                const tickerUp = ticker?.trim().toUpperCase();
+                const mine = rows.find(r => (r.TICKER || '').trim().toUpperCase() === tickerUp);
+                const dateStr = mine ? (mine.NEXT_EARNINGS_DATE || '').trim() : '';
+                if (!dateStr) { banner.style.display = 'none'; return; }
+                const target = new Date(dateStr);
+                if (isNaN(target.getTime())) { banner.style.display = 'none'; return; }
+                const today = new Date(new Date().toISOString().slice(0, 10));
+                const targetDay = new Date(target.toISOString().slice(0, 10));
+                const daysUntil = Math.round((targetDay - today) / 86400000);
+                // Already reported (yfinance's calendar can lag a day or two
+                // after the print before rolling to the next date) -- nothing
+                // actionable left to warn about, so just hide it rather than
+                // show a stale/confusing negative day count.
+                if (daysUntil < 0) { banner.style.display = 'none'; return; }
+                const { bg, fg, label } = earningsUrgency(daysUntil);
+                const epsStr = mine.EPS_ESTIMATE && String(mine.EPS_ESTIMATE).trim() !== ''
+                    ? ` &middot; Est. EPS: ${mine.EPS_ESTIMATE}` : '';
+                banner.style.backgroundColor = bg;
+                banner.style.color = fg;
+                banner.style.display = 'inline-block';
+                banner.innerHTML = `📅 Earnings: ${dateStr} (${label})${epsStr}`;
+            })
+            .catch(() => { banner.style.display = 'none'; });
+    }
+    function loadNewsEvents() {
+        const panel = document.getElementById('news-events-panel');
+        Promise.all([
+            fetch('news_headlines.csv?' + new Date().getTime()).then(r => r.ok ? r.text() : '').catch(() => ''),
+            fetch('sec_events.csv?' + new Date().getTime()).then(r => r.ok ? r.text() : '').catch(() => '')
+        ]).then(([newsCsv, secCsv]) => {
+            const tickerUp = ticker?.trim().toUpperCase();
+            const newsAll = newsCsv ? Papa.parse(newsCsv, { header: true, skipEmptyLines: true }).data : [];
+            const secAll = secCsv ? Papa.parse(secCsv, { header: true, skipEmptyLines: true }).data : [];
+            const news = newsAll
+                .filter(r => (r.TICKER || '').trim().toUpperCase() === tickerUp)
+                .sort((a, b) => (b.PUBLISHED || '').localeCompare(a.PUBLISHED || ''));
+            const sec = secAll
+                .filter(r => (r.TICKER || '').trim().toUpperCase() === tickerUp)
+                .sort((a, b) => (b.DATE || '').localeCompare(a.DATE || ''));
+ 
+            if (news.length === 0 && sec.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'flex';
+ 
+            const newsCol = document.createElement('div');
+            newsCol.className = 'ne-col';
+            let newsHtml = '<div class="ne-col-title">📰 Recent News</div>';
+            if (news.length === 0) {
+                newsHtml += '<div class="ne-empty">No recent news found.</div>';
+            } else {
+                news.forEach(n => {
+                    const d = daysAgo(n.PUBLISHED);
+                    const style = recencyStyle(d);
+                    const title = (n.TITLE || '').replace(/</g, '&lt;');
+                    newsHtml += `<div class="ne-item" style="background-color:${style.bg || 'transparent'}">
+                        <a href="${n.LINK || '#'}" target="_blank" rel="noopener">${title}</a>
+                        <div class="ne-meta">${n.PUBLISHER || ''}${style.label ? ' · ' + style.label : ''}</div>
+                    </div>`;
+                });
+            }
+            newsCol.innerHTML = newsHtml;
+ 
+            const secCol = document.createElement('div');
+            secCol.className = 'ne-col';
+            let secHtml = '<div class="ne-col-title">📄 SEC Filings (8-K, last 180d)</div>';
+            if (sec.length === 0) {
+                secHtml += '<div class="ne-empty">No recent 8-K filings found.</div>';
+            } else {
+                sec.forEach(s => {
+                    // Item 7.01 (Reg FD Disclosure) is the one most likely to be an
+                    // investor presentation -- e.g. slides shown at a conference like
+                    // Computex -- so it gets a distinct highlight instead of blending
+                    // in with routine 8-Ks (earnings releases, board changes, etc).
+                    const isPresentation = s.EVENT_TYPE === 'Investor Presentation / Reg FD Disclosure';
+                    const d = daysAgo(s.DATE);
+                    const style = recencyStyle(d);
+                    const bg = isPresentation ? '#fff3cd' : (style.bg || 'transparent');
+                    const desc = (s.DESCRIPTION || '').replace(/</g, '&lt;');
+                    secHtml += `<div class="ne-item ${isPresentation ? 'ne-highlight' : ''}" style="background-color:${bg}">
+                        <a href="${s.URL || '#'}" target="_blank" rel="noopener">${isPresentation ? '⭐ ' : ''}${s.EVENT_TYPE || 'SEC Filing'}</a>
+                        <div class="ne-meta">${s.DATE || ''}${style.label ? ' · ' + style.label : ''}${desc ? ' · ' + desc : ''}</div>
+                    </div>`;
+                });
+            }
+            secCol.innerHTML = secHtml;
+ 
+            panel.innerHTML = '';
+            panel.appendChild(newsCol);
+            panel.appendChild(secCol);
+        }).catch(() => { panel.style.display = 'none'; });
+    }
     async function refreshDashboard() {
-        const scrollPosition = window.scrollY; 
-        
+        // Table rebuilds fully every cycle -- capture BOTH axes so a
+        // horizontal scroll (manual, or the auto-zoom-to-N/N-1DTE-column
+        // below) survives the next refresh instead of snapping back to
+        // the leftmost column every 5 seconds.
+        const scrollPositionX = window.scrollX;
+        const scrollPositionY = window.scrollY;
+ 
         await loadTickerMeta();
-        
-        fetch('dashboard.csv?' + new Date().getTime(), { cache: 'no-store' }) 
+ 
+        fetch('dashboard.csv?' + new Date().getTime(), { cache: 'no-store' })
           .then(response => {
             if (!response.ok) throw new Error(`File network failed: ${response.status}`);
             return response.text();
@@ -99,20 +353,95 @@
             const results = Papa.parse(csv, { header: true, skipEmptyLines: true });
             const rawData = results.data;
             const data = rawData.filter(row => row.TICKER?.trim().toUpperCase() === ticker?.trim().toUpperCase());
-            
+ 
             if (data.length === 0) {
               if (initialLoadComplete) return;
               table.innerHTML = '<tr><td>No data found for this ticker.</td></tr>';
               return;
             }
-
-            const fragment = document.createDocumentFragment(); 
+            const fragment = document.createDocumentFragment();
             const lastTimestamp = rawData[0]['EXECUTION_TIME_STAMP'] || 'N/A';
             refreshTimerEl.textContent = `Last Data Refresh: ${lastTimestamp}`;
-            
+ 
             let currStrike = null;
             data.forEach(row => { if (row['CURR'] === 'CURR') currStrike = parseFloat(row['STRIKE']); });
-            
+ 
+            // emBounds now only carries the raw price + 1x move magnitude
+            // straight from TOS RTD (FRONT_EX_MOVE/BACK_EX_MOVE) -- neither
+            // the 1x nor the 2x band is pre-selected to a real strike
+            // anywhere in that data, so both are snapped to the nearest
+            // actual listed strike here. 1x is mathematically always
+            // nested inside 2x (EM_1X < 2 * EM_1X for any positive move),
+            // so "inner band" is guaranteed to make sense, not just a
+            // visual assumption.
+            const nearestStrikeTo = (target) => {
+                let nearest = null, nearestDiff = Infinity;
+                data.forEach(row => {
+                    const s = parseFloat(row['STRIKE']);
+                    if (isNaN(s)) return;
+                    const diff = Math.abs(s - target);
+                    if (diff < nearestDiff) { nearestDiff = diff; nearest = s; }
+                });
+                return nearest;
+            };
+            const em1xEdges = {};
+            const em2xEdges = {};
+            [0, 1].forEach(d => {
+                const b = emBounds[d];
+                if (!b || isNaN(b.price) || isNaN(b.em1x)) return;
+                em1xEdges[d] = {
+                    lower: nearestStrikeTo(b.price - b.em1x),
+                    upper: nearestStrikeTo(b.price + b.em1x),
+                };
+                em2xEdges[d] = {
+                    lower: nearestStrikeTo(b.price - b.em1x * EM_MULTIPLIER_2X),
+                    upper: nearestStrikeTo(b.price + b.em1x * EM_MULTIPLIER_2X),
+                };
+            });
+            // Shared marker for both the STRIKE column (always visible, no
+            // horizontal scrolling needed) and the N/N columns under each
+            // DTE's own super-header. Nested design: a thick solid ring at
+            // the 2x target strikes (the outer band -- what this screener's
+            // trade style actually selects), a thinner solid ring at the
+            // narrower 1x straddle-price strikes nested inside it, a bold
+            // stripe filling the 1x band, and a faint stripe filling the
+            // rest of the 2x band outside that. All drawn as box-shadow so
+            // 0DTE (hot pink/magenta) and 1DTE (indigo-blue) markers can stack on the same
+            // cell without one overwriting the other the way a plain CSS
+            // border would.
+            function expectedMoveShadow(strike, onlyDte) {
+                // onlyDte omitted/null -> draw both DTEs' markers (used for
+                // the shared STRIKE column, which applies to every
+                // expiration). onlyDte 0 or 1 -> draw only that expiration's
+                // marker (used for the _0/_1 N/N columns, each of which
+                // belongs to one specific expiration and shouldn't also echo
+                // the other DTE's band).
+                const shadows = [];
+                const dtesToDraw = (onlyDte === 0 || onlyDte === 1) ? [onlyDte] : [0, 1];
+                dtesToDraw.forEach(d => {
+                    const b2 = em2xEdges[d];
+                    const b1 = em1xEdges[d];
+                    if (!b2 || !b1 || isNaN(strike)) return;
+                    const color = EM_COLORS[d];
+                    const colorLight = EM_COLORS_LIGHT[d];
+                    const sideInset = d === 0 ? '9px 0 0' : '-9px 0 0';
+                    // Plain color, no halo -- just the saturated marker itself.
+                    // 1x (the nearer, more likely band) is drawn BOLDER than
+                    // 2x (the further, less likely band) -- a thicker ring
+                    // at the 1x edge, a thinner one at the 2x edge.
+                    if (strike === b1.upper || strike === b1.lower) {
+                        shadows.push(`inset 0 0 0 7px ${color}`);
+                    } else if (strike === b2.upper || strike === b2.lower) {
+                        shadows.push(`inset 0 0 0 4px ${color}`);
+                    } else if (strike > b1.lower && strike < b1.upper) {
+                        shadows.push(`inset ${sideInset} ${color}`);
+                    } else if (strike > b2.lower && strike < b2.upper) {
+                        shadows.push(`inset ${sideInset} ${colorLight}`);
+                    }
+                });
+                return shadows.length ? shadows.join(', ') : null;
+            }
+ 
             const gradientCols = ['NUMBER_OF_M_TOTAL_AVG_0', 'NUMBER_OF_1_TOTAL_AVG_0', 'NUMBER_OF_M_TOTAL_AVG', 'NUMBER_OF_1_TOTAL_AVG'];
             let maxSummaryValue = 0;
             gradientCols.forEach(col => {
@@ -121,17 +450,22 @@
                 if (!isNaN(val)) maxSummaryValue = Math.max(maxSummaryValue, Math.abs(val));
               });
             });
-
             let columns = Object.keys(data[0]);
-            
+ 
             const exclude = [
-                'CURRENT_PRICE', 'PERCENT_CHANGE', 'CURR', 'TICKER', 'PRICE_FLOOR', 
-                'EXECUTION_TIME_STAMP', 'DTE_STRING_AVG', 
+                'CURRENT_PRICE', 'PERCENT_CHANGE', 'CURR', 'TICKER', 'PRICE_FLOOR',
+                'EXECUTION_TIME_STAMP', 'DTE_STRING_AVG',
                 'DTE_STRING_AVG0', 'DTE_STRING_0', 'DTE_STRING_1', 'DEX_1',
-                'DEX_AVG', 'DEX_AVG0', 'DEX_0'
+                'DEX_AVG', 'DEX_AVG0', 'DEX_0',
+                // Models (AVG Model / AVG-0 Model) columns -- not currently
+                // used, and dropping them frees up meaningful horizontal
+                // width, which matters most in a narrow multi-pane view
+                // where every column counts toward whether the 1DTE N/N
+                // column is reachable without scrolling at all.
+                'NUMBER_OF_M_TOTAL_AVG', 'NUMBER_OF_1_TOTAL_AVG',
+                'NUMBER_OF_M_TOTAL_AVG_0', 'NUMBER_OF_1_TOTAL_AVG_0'
             ];
             columns = columns.filter(col => !exclude.includes(col));
-
             const pCIdx = columns.indexOf('PRICE_CEILING');
             const strikeIdx = columns.indexOf('STRIKE');
             if (pCIdx !== -1 && strikeIdx !== -1) {
@@ -139,7 +473,6 @@
                 const newStrikeIdx = columns.indexOf('STRIKE');
                 columns.splice(newStrikeIdx + 1, 0, col);
             }
-
             const cols0 = columns.filter(c => c.endsWith('_0') && !c.startsWith('NUMBER_OF'));
             const cols1 = columns.filter(c => c.endsWith('_1'));
             if (cols0.length > 0 && cols1.length > 0) {
@@ -151,7 +484,6 @@
                     columns.splice(newFirst0 + cols0.length, 0, ...removed1);
                 }
             }
-
             const oiVolGroups = [
               ['GEX_OI_VOL_AVG', 'ZONE_OI_VOL_AVG', 'POWER_OI_VOL_AVG', 'NEG_NEG_OI_VOL_AVG'],
               ['GEX_OI_VOL_AVG0', 'ZONE_OI_VOL_AVG0', 'POWER_OI_VOL_AVG0', 'NEG_NEG_OI_VOL_AVG0'],
@@ -164,26 +496,23 @@
               ['GEX_OI_0', 'ZONE_OI_0', 'POWER_OI_0', 'NEG_NEG_OI_0'],
               ['GEX_OI_1', 'ZONE_OI_1', 'POWER_OI_1', 'NEG_NEG_OI_1']
             ];
-
             const zoneCols = ['ZONE_OI_VOL_AVG', 'ZONE_OI_VOL_AVG0', 'ZONE_OI_VOL_1', 'ZONE_OI_VOL_0', 'ZONE_OI_AVG', 'ZONE_OI_AVG0', 'ZONE_OI_1', 'ZONE_OI_0'];
             const negNegOiCols = ['NEG_NEG_OI_VOL_AVG', 'NEG_NEG_OI_AVG', 'NEG_NEG_OI_VOL_AVG0', 'NEG_NEG_OI_AVG0', 'NEG_NEG_OI_VOL_1', 'NEG_NEG_OI_1', 'NEG_NEG_OI_VOL_0', 'NEG_NEG_OI_0'];
             const powerOiCols = ['POWER_OI_VOL_AVG', 'POWER_OI_AVG', 'POWER_OI_VOL_AVG0', 'POWER_OI_AVG0', 'POWER_OI_VOL_1', 'POWER_OI_1', 'POWER_OI_VOL_0', 'POWER_OI_0'];
             const gexOiBarCols = ['GEX_OI_VOL_AVG', 'GEX_OI_AVG', 'GEX_OI_VOL_AVG0', 'GEX_OI_AVG0', 'GEX_OI_VOL_1', 'GEX_OI_1', 'GEX_OI_VOL_0', 'GEX_OI_0'];
-
             const maxValues = {};
             gexOiBarCols.forEach(col => {
               maxValues[col] = Math.max(...data.map(row => Math.abs(parseFloat(row[col]) || 0)));
             });
-
             // TOP ROW: TICKER + TREND + STATUS
             const topRow = document.createElement('tr');
             const thT = document.createElement('th');
             const normT = ticker?.trim().toUpperCase();
-            
+ 
             // Logic to determine Cell background color based on Trend
             const trendUpper = metaData.trend.toUpperCase();
             let headerBG = '#3cb371'; // Default Green-ish
-            
+ 
             if (trendUpper.includes('BEAR')) {
                 headerBG = 'red';
             } else if (trendUpper.includes('BULL')) {
@@ -195,16 +524,14 @@
                 const tickerColors = { 'SPX': '#007bff', 'SPY': '#ff00ff', 'QQQ': '#ff9900' };
                 headerBG = tickerColors[normT] || '#3cb371';
             }
-
             thT.textContent = `${normT} | TREND: ${metaData.trend} | STATUS: ${metaData.status}`;
-            thT.colSpan = columns.length; 
+            thT.colSpan = columns.length;
             thT.style.backgroundColor = headerBG;
-            thT.style.color = 'black'; 
+            thT.style.color = 'black';
             thT.style.fontSize = '20px';
             thT.style.top = '0px'; thT.style.zIndex = 11;
             topRow.appendChild(thT);
             fragment.appendChild(topRow);
-
             // SUPER HEADER ROW: AVG, AVG-0, 0, 1, Models
             const superRow = document.createElement('tr');
             const createSH = (text, span, color, z = 10, textColor = 'black') => {
@@ -215,18 +542,19 @@
                 th.classList.add('reduced-height-header');
                 return th;
             };
-
             const countSfx = (sfx) => columns.filter(c => c.endsWith(sfx) && !c.startsWith('NUMBER_OF')).length;
             const modelSpan = columns.filter(c => c.startsWith('NUMBER_OF')).length;
-
             superRow.appendChild(createSH('', 2, '#333')); // Strike + Mid
             superRow.appendChild(createSH('AVG', countSfx('_AVG'), '#90caf9'));
             superRow.appendChild(createSH('AVG-0', countSfx('_AVG0'), '#d3d3d3'));
             superRow.appendChild(createSH('0', countSfx('_0'), '#d1c4e9'));
-            superRow.appendChild(createSH('1', countSfx('_1'), '#fff3e0')); 
-            superRow.appendChild(createSH('Models', modelSpan, '#424242', 10, 'white'));
+            superRow.appendChild(createSH('1', countSfx('_1'), '#fff3e0'));
+            // colSpan=0 isn't valid HTML (browsers clamp it to 1, which
+            // would draw an empty "Models" header cell floating with no
+            // data columns under it) -- skip the header entirely once the
+            // Models columns are excluded above and modelSpan is 0.
+            if (modelSpan > 0) superRow.appendChild(createSH('Models', modelSpan, '#424242', 10, 'white'));
             fragment.appendChild(superRow);
-
             // MID ROW: OI+VOL, OI groups
             const midRow = document.createElement('tr');
             let i = 0;
@@ -234,9 +562,9 @@
               const col = columns[i];
               const th = document.createElement('th');
               th.style.top = '38px'; th.style.zIndex = 9; th.classList.add('reduced-height-header');
-              
+ 
               const findGroup = (groups, label) => {
-                for (const g of groups) { 
+                for (const g of groups) {
                   const actualGroup = g.filter(gc => columns.includes(gc));
                   if (actualGroup.length > 0 && col === actualGroup[0]) {
                     th.textContent = label; th.colSpan = actualGroup.length;
@@ -245,7 +573,6 @@
                   }
                 } return false;
               };
-
               if (col.startsWith('NUMBER_OF_M_TOTAL')) {
                 th.textContent = col.includes('AVG_0') ? 'AVG-0 Model' : 'AVG Model';
                 th.colSpan = 2; th.style.backgroundColor = col.includes('AVG_0') ? '#304ffe' : '#4caf50';
@@ -257,11 +584,9 @@
               }
               if (findGroup(oiVolGroups, 'OI+VOL')) continue;
               if (findGroup(oiGroups, 'OI')) continue;
-
               midRow.appendChild(th); i++;
             }
             fragment.appendChild(midRow);
-
             // HEAD ROW: GEX, Z, P, N/N etc.
             const headRow = document.createElement('tr');
             columns.forEach(col => {
@@ -281,19 +606,17 @@
               headRow.appendChild(th);
             });
             fragment.appendChild(headRow);
-
             // DATA ROWS
             data.forEach(row => {
               const tr = document.createElement('tr');
               if (row['CURR'] === 'CURR') { tr.classList.add('curr-border-row'); }
-              
+              const thisStrike = parseFloat(row['STRIKE']);
+ 
               columns.forEach(key => {
                 const td = document.createElement('td');
                 let val = row[key];
                 const isModelCol = key.startsWith('NUMBER_OF_M_TOTAL') || key.startsWith('NUMBER_OF_1_TOTAL');
-
                 if (powerOiCols.includes(key)) val = formatNumber(val);
-
                 if (gradientCols.includes(key) && !isModelCol) {
                   const num = parseFloat(val);
                   if (!isNaN(num) && num !== 0) {
@@ -313,10 +636,9 @@
                     }
                   } else { val = ''; }
                 }
-
                 if (isModelCol) {
                     const num = parseFloat(val);
-                    if (isNaN(num) || num === 0) { val = ''; } 
+                    if (isNaN(num) || num === 0) { val = ''; }
                     else {
                         if (key.includes('NUMBER_OF_1')) {
                             const s = parseFloat(row['STRIKE']);
@@ -326,12 +648,15 @@
                         } else { val = (key.includes('AVG_0') ? 'MS-' : 'M-') + val; }
                     }
                 }
-
                 td.textContent = val;
                 if (key === 'PRICE_CEILING' || key.includes('NEG_NEG')) td.classList.add('bold-border-right');
                 if (key.includes('DEX') || key.startsWith('NUMBER_OF_M')) td.classList.add('bold-border-left');
-                if (key === 'STRIKE') { td.classList.add('strike-blue'); td.style.fontWeight = 'bold'; }
-                
+                if (key === 'STRIKE') {
+                    td.classList.add('strike-blue'); td.style.fontWeight = 'bold';
+                    const emShadow = expectedMoveShadow(thisStrike);
+                    if (emShadow) td.style.boxShadow = emShadow;
+                }
+ 
                 if (!isModelCol) {
                     if (key.endsWith('_AVG')) {
                         td.style.backgroundColor = oiVolGroups[0].includes(key) ? '#64b5f6' : '#90caf9';
@@ -367,7 +692,27 @@
                     }
                     if (negNegOiCols.includes(key)) {
                         if (!isNaN(parseFloat(val))) { td.style.backgroundColor='#ccffcc'; td.style.color='black'; td.style.fontWeight='bold'; }
-                        else if (val.trim()==='N/N') { td.style.backgroundColor='#f25649'; td.style.color='white'; td.style.fontWeight='bold'; }
+                        else if (val.trim()==='N/N') { td.style.backgroundColor='#fbc4be'; td.style.color='black'; td.style.fontWeight='bold'; }
+                        // Expected-move range overlay -- only the N/N columns
+                        // that belong to the 0DTE/1DTE super-headers (the ones
+                        // whose value echoes STRIKE) get marked; the AVG/AVG-0
+                        // N/N columns are left alone since expected move is
+                        // only meaningful for a specific expiration.
+                        if (key === 'NEG_NEG_OI_VOL_0' || key === 'NEG_NEG_OI_0' || key === 'NEG_NEG_OI_VOL_1' || key === 'NEG_NEG_OI_1') {
+                            const colDte = key.endsWith('_0') ? 0 : 1;
+                            const emShadow = expectedMoveShadow(thisStrike, colDte);
+                            if (emShadow) td.style.boxShadow = emShadow;
+                        }
+                        // Marks the one cell the page auto-scrolls/zooms to
+                        // on first load: the current-price row's N/N column
+                        // under the "1" (1DTE) OI group specifically (not
+                        // OI+VOL, not AVG/AVG-0) -- this is the column most
+                        // relevant to the near-term GEX read, and the one
+                        // otherwise buried off-screen to the right in a
+                        // narrow multi-pane view.
+                        if (key === 'NEG_NEG_OI_1' && row['CURR'] === 'CURR') {
+                            td.classList.add('zoom-anchor');
+                        }
                     }
                     if (powerOiCols.includes(key)) {
                         const pMap = { '1':'red', '2':'#0A5AF2', '3':'#5985D9', '4':'#85ABF2', '5':'#A2BEF2' };
@@ -377,23 +722,54 @@
                     else if (val.trim()==='+') { td.style.backgroundColor='#39ff14'; td.style.fontWeight='bold'; }
                     else if (val.trim()==='-') { td.style.backgroundColor='red'; td.style.color=zoneCols.includes(key)?'black':'green'; td.style.fontWeight='bold'; }
                 }
-
                 tr.appendChild(td);
               });
               fragment.appendChild(tr);
             });
             table.innerHTML = ''; table.appendChild(fragment);
-            
+ 
+            // The 4 sticky header rows were using hardcoded pixel offsets
+            // (0/20/38/56) for their `top` value, guessed once for one
+            // specific font-size/padding combination. Any later change to
+            // header content, font sizing, or padding (or just a different
+            // browser's text metrics) throws that off -- the title row's
+            // real height doesn't equal 20px, so the next row down (locked
+            // at top:20px, but drawn UNDER the title row's higher z-index)
+            // gets its top edge visually clipped by the title row when
+            // both are pinned during a scroll. Measuring each row's actual
+            // rendered height here and stacking the offsets from that,
+            // instead of a fixed guess, keeps the header rows cleanly
+            // stacked no matter what.
+            let stickyOffset = 0;
+            [topRow, superRow, midRow, headRow].forEach(row => {
+                Array.from(row.children).forEach(th => { th.style.top = stickyOffset + 'px'; });
+                stickyOffset += row.getBoundingClientRect().height;
+            });
+ 
             const currRowEl = table.querySelector('.curr-border-row');
-            if (!initialLoadComplete && currRowEl) {
-              setTimeout(() => { currRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 0);
-            } else { window.scrollTo(0, scrollPosition); }
+            // Prefer the CURR row's N/N (1DTE OI) cell so the initial
+            // scroll centers BOTH axes at once -- vertically on the
+            // current-price row (as before) and horizontally on that
+            // column, instead of landing at the leftmost STRIKE column
+            // the way scrollIntoView on the whole (very wide) <tr> would.
+            // Falls back to the plain row if that column isn't present
+            // for some reason (e.g. this DTE has no data yet).
+            const zoomAnchorEl = table.querySelector('.zoom-anchor') || currRowEl;
+            if (!initialLoadComplete && zoomAnchorEl) {
+              setTimeout(() => { zoomAnchorEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); }, 0);
+            } else { window.scrollTo(scrollPositionX, scrollPositionY); }
             initialLoadComplete = true;
           })
           .catch(err => console.warn('Refresh skipped:', err.message));
     }
     refreshDashboard();
     setInterval(refreshDashboard, REFRESH_INTERVAL_MS);
+    loadNewsEvents();
+    setInterval(loadNewsEvents, NEWS_EVENTS_REFRESH_INTERVAL_MS);
+    loadExpectedMove();
+    setInterval(loadExpectedMove, EM_REFRESH_INTERVAL_MS);
+    loadEarnings();
+    setInterval(loadEarnings, EARNINGS_REFRESH_INTERVAL_MS);
   </script>
 </body>
 </html>
