@@ -327,6 +327,10 @@
                 'CURRENT_PRICE', 'PERCENT_CHANGE', 'CURR', 'TICKER', 'PRICE_FLOOR',
                 'EXECUTION_TIME_STAMP', 'DTE_STRING_AVG',
                 'DTE_STRING_AVG0', 'DTE_STRING_0', 'DTE_STRING_1', 'DEX_1',
+                // Carried in dashboard_High.csv purely to label the '0' and
+                // '1' super headers with the expiry each group holds. Excluded
+                // BEFORE the _0/_1 colspan counts, so they cannot widen a group.
+                'EXP_0', 'EXP_1',
                 'DEX_AVG', 'DEX_AVG0', 'DEX_0',
                 // Models (AVG Model / AVG-0 Model) columns -- not currently
                 // used, and dropping them frees up meaningful horizontal
@@ -388,6 +392,19 @@
             thT.style.top = '0px'; thT.style.zIndex = 11;
             topRow.appendChild(thT);
             fragment.appendChild(topRow);
+            // 'YYYY-MM-DD' -> 'MM/DD'. dte is a POSITIONAL index, so the
+            // same '0' header means a different expiry for different
+            // tickers on the same day -- which is precisely why it is worth
+            // printing rather than inferring.
+            const shortExp = (v) => {
+                const s = String(v || '').trim();
+                const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                return m ? `${m[2]}/${m[3]}` : '';
+            };
+            const expLabel = (n, sfx) => {
+                const e = shortExp(data[0] && data[0][sfx]);
+                return e ? `${n} (${e})` : String(n);
+            };
             const superRow = document.createElement('tr');
             const createSH = (text, span, color, z = 10, textColor = 'black') => {
                 const th = document.createElement('th');
@@ -402,8 +419,8 @@
             superRow.appendChild(createSH('', 2, '#333'));
             superRow.appendChild(createSH('AVG', countSfx('_AVG'), '#90caf9'));
             superRow.appendChild(createSH('AVG-0', countSfx('_AVG0'), '#d3d3d3'));
-            superRow.appendChild(createSH('0', countSfx('_0'), '#d1c4e9'));
-            superRow.appendChild(createSH('1', countSfx('_1'), '#fff3e0'));
+            superRow.appendChild(createSH(expLabel('0', 'EXP_0'), countSfx('_0'), '#d1c4e9'));
+            superRow.appendChild(createSH(expLabel('1', 'EXP_1'), countSfx('_1'), '#fff3e0'));
             // colSpan=0 isn't valid HTML (browsers clamp it to 1, which
             // would draw an empty "Models" header cell floating with no
             // data columns under it) -- skip the header entirely once the
