@@ -310,7 +310,24 @@
                     const numVal = parseFloat(val);
                     td.textContent = val;
                     if (key === 'TICKER') {
-                        if (['SPX', 'SPY', 'QQQ', 'IWM'].includes(val.toUpperCase())) td.classList.add('highlight-ticker');
+                        // Blue follows the GATE column, not a ticker list.
+                        // This was the FOURTH hardcoded copy of
+                        // ['SPX','SPY','QQQ','IWM'] in the codebase -- the
+                        // others live in compute_bull_filtered.ALWAYS_INCLUDE
+                        // and compute_datatemp_High.FORCE_TICKERS. Adding VIX
+                        // to ALWAYS_INCLUDE forced the row but left it white,
+                        // because this list never heard about it. Reading the
+                        // gate the row already carries means the highlight can
+                        // never disagree with what was actually forced again.
+                        const gateKey = Object.keys(row).find(k => k.toUpperCase() === 'GATE');
+                        const gateVal = gateKey ? String(row[gateKey] || '').trim().toUpperCase() : null;
+                        if (gateVal !== null
+                                ? gateVal === 'FORCED'
+                                // Only if the column is absent entirely (an
+                                // older CSV) do we fall back to the old list.
+                                : ['SPX', 'SPY', 'QQQ', 'IWM'].includes(val.toUpperCase())) {
+                            td.classList.add('highlight-ticker');
+                        }
                         td.style.fontWeight = 'bold';
                     }
                     if (key === 'CURRENT_PRICE') {
