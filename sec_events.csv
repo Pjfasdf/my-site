@@ -180,6 +180,7 @@ ANF,2026-08-26,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edg
 ANF,2026-08-20,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1018840/000101884026000039/anf-20260818.htm
 ANF,2026-06-04,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1018840/000101884026000034/anf-20260603.htm
 ANF,2026-05-27,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1018840/000101884026000029/anf-20260527.htm
+APA,2026-10-07,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1841666/000184166626000058/apa8k-20261007.htm
 APA,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1841666/000184166626000050/apa8k-20260805.htm
 APA,2026-07-08,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1841666/000184166626000045/apa8k-20260708.htm
 APA,2026-05-26,Executive/Board Change,"5.02,5.07,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1841666/000184166626000037/apa8k-20260521.htm
@@ -193,6 +194,7 @@ APH,2026-05-22,8-K: Other Material Event,"5.07,9.01",FORM 8-K,https://www.sec.go
 APH,2026-05-12,Material Agreement,"1.01,2.03,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/820313/000110465926059404/tm2613386d5_8k.htm
 APH,2026-05-06,Material Agreement,"1.01,8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/820313/000110465926055888/tm2613386d4_8k.htm
 APH,2026-04-29,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/820313/000110465926050984/aph-20260429x8k.htm
+APLD,2026-10-07,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000114487926000057/apld-20261007.htm
 APLD,2026-07-27,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000114487926000044/apld-20260727.htm
 APLD,2026-06-26,Material Agreement,"1.01,2.03,3.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000149315226030333/form8-k.htm
 APLD,2026-06-16,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000149315226028899/form8-k.htm
@@ -200,7 +202,6 @@ APLD,2026-06-09,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https:
 APLD,2026-06-09,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000149315226027979/form8-k.htm
 APLD,2026-06-09,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000149315226027857/form8-k.htm
 APLD,2026-05-05,Material Agreement,"1.01,2.01,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000149315226021333/form8-k.htm
-APLD,2026-04-23,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1144879/000114487926000036/apld-20260423.htm
 APP,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1751008/000175100826000057/app-20260805.htm
 APP,2026-06-05,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1751008/000175100826000050/app-20260603.htm
 APP,2026-05-06,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1751008/000175100826000042/app-20260506.htm
@@ -349,7 +350,6 @@ CAT,2026-08-04,Earnings Release,"2.02,7.01,9.01",8-K,https://www.sec.gov/Archive
 CAT,2026-06-11,Investor Presentation / Reg FD Disclosure,"5.07,7.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/18230/000110465926072929/tm2617177d1_8k.htm
 CAT,2026-04-30,Earnings Release,"2.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/18230/000001823026000017/cat-20260430.htm
 CAT,2026-04-13,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/18230/000110465926042621/tm2611571d2_8k.htm
-CAT,2026-04-10,Executive/Board Change,"5.02,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/18230/000110465926042062/tm2611571d1_8k.htm
 CAVA,2026-09-18,Other Material Event,8.01,8-K,https://www.sec.gov/Archives/edgar/data/1639438/000162828026062616/cava-20260917.htm
 CAVA,2026-08-11,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1639438/000162828026055709/cava-20260811.htm
 CAVA,2026-08-03,Executive/Board Change,"5.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1639438/000162828026051556/cava-20260729.htm
@@ -779,7 +779,6 @@ EXPE,2026-08-05,Earnings Release,"2.02,7.01,8.01,9.01",8-K,https://www.sec.gov/A
 EXPE,2026-06-23,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1324424/000132442426000042/expe-20260617.htm
 EXPE,2026-05-07,Earnings Release,"2.02,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1324424/000132442426000031/expe-20260507.htm
 EXPE,2026-04-23,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1324424/000132442426000016/expe-20260417.htm
-EXPE,2026-04-10,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1324424/000110465926042073/tm2611456d1_8k.htm
 F,2026-10-02,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/37996/000003799626000184/f-20261002.htm
 F,2026-07-28,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/37996/000003799626000155/f-20260728.htm
 F,2026-07-02,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/37996/000003799626000151/f-20260702.htm
@@ -851,6 +850,7 @@ FUBO,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/ed
 FUBO,2026-07-29,Executive/Board Change,"5.02,5.03,5.07,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1484769/000149315226035251/form8-k.htm
 FUBO,2026-07-09,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1484769/000149315226032696/form8-k.htm
 FUBO,2026-05-06,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1484769/000149315226021406/form8-k.htm
+GD,2026-10-08,Executive/Board Change,"5.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/40533/000119312526417188/d122892d8k.htm
 GD,2026-08-07,Executive/Board Change,"5.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/40533/000119312526340490/d129075d8k.htm
 GD,2026-08-04,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/40533/000119312526332899/d122083d8k.htm
 GD,2026-07-29,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/40533/000004053326000029/gd-20260729.htm
@@ -974,6 +974,7 @@ HD,2026-08-18,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edga
 HD,2026-08-12,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/354950/000035495026000141/hd-20260811.htm
 HD,2026-05-26,Bylaws/Fiscal Year Change,"5.03,5.07,9.01",8-K,https://www.sec.gov/Archives/edgar/data/354950/000035495026000105/hd-20260521.htm
 HD,2026-05-19,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/354950/000035495026000101/hd-20260519.htm
+HIMS,2026-10-07,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1773751/000177375126000220/hims-20261007.htm
 HIMS,2026-08-10,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1773751/000177375126000161/hims-20260810.htm
 HIMS,2026-07-17,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1773751/000177375126000149/hims-20260713.htm
 HIMS,2026-07-01,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1773751/000177375126000146/hims-20260626.htm
@@ -981,7 +982,6 @@ HIMS,2026-06-15,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/
 HIMS,2026-06-02,Material Agreement,"1.01,2.03,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1773751/000177375126000091/hims-20260529.htm
 HIMS,2026-05-21,Material Agreement,"1.01,2.03,3.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1773751/000119312526234847/d264371d8k.htm
 HIMS,2026-05-19,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1773751/000119312526229749/d227898d8k.htm
-HIMS,2026-05-11,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1773751/000177375126000074/hims-20260511.htm
 HIVE,2026-09-17,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1720424/000106299326004996/form8k.htm
 HIVE,2026-09-16,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1720424/000106299326004970/form8k.htm
 HIVE,2026-08-19,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1720424/000106299326004522/form8k.htm
@@ -995,7 +995,6 @@ HL,2026-08-28,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/
 HL,2026-08-04,Earnings Release,"2.02,8.01",8-K,https://www.sec.gov/Archives/edgar/data/719413/000119312526333077/hl-20260804.htm
 HL,2026-05-22,Executive/Board Change,"5.02,5.07,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/719413/000143774926018228/hl20260522_8k.htm
 HL,2026-05-05,Earnings Release,"2.02,8.01",8-K,https://www.sec.gov/Archives/edgar/data/719413/000119312526206729/hl-20260505.htm
-HL,2026-04-10,8-K: Other Material Event,"1.02,2.04,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/719413/000143774926011930/hl20260409_8k.htm
 HNST,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1530979/000162828026053315/hnst-20260805.htm
 HNST,2026-06-18,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1530979/000162828026044390/hnst-20260614.htm
 HNST,2026-05-27,Executive/Board Change,"5.02,5.07",8-K,https://www.sec.gov/Archives/edgar/data/1530979/000162828026038504/hnst-20260520.htm
@@ -1043,7 +1042,6 @@ HUM,2026-06-01,Investor Presentation / Reg FD Disclosure,7.01,8-K,https://www.se
 HUM,2026-05-19,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/49071/000004907126000025/hum-20260515.htm
 HUM,2026-04-29,Earnings Release,"2.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/49071/000004907126000021/hum-20260429.htm
 HUM,2026-04-20,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/49071/000004907126000015/hum-20260416.htm
-HUM,2026-04-10,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/49071/000004907126000013/hum-20260410.htm
 HUMA,2026-09-28,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1818382/000181838226000011/huma-20260922.htm
 HUMA,2026-08-12,Earnings Release,"2.02,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1818382/000110465926094440/tm2622949d1_8k.htm
 HUMA,2026-07-31,8-K: Other Material Event,3.01,FORM 8-K,https://www.sec.gov/Archives/edgar/data/1818382/000110465926089281/tm2621850d1_8k.htm
@@ -1124,6 +1122,7 @@ JPM,2026-06-25,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edga
 JPM,2026-06-24,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/19617/000162828026045169/jpm-20260624.htm
 JPM,2026-06-24,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/19617/000162828026045167/jpm-20260624.htm
 JPM,2026-06-02,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/19617/000119312526253533/d113536d8k.htm
+KHC,2026-10-07,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1637459/000163745926000069/khc-20261007.htm
 KHC,2026-10-06,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1637459/000163745926000067/khc-20261002.htm
 KHC,2026-08-26,Investor Presentation / Reg FD Disclosure,"3.01,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1637459/000163745926000057/khc-20260824.htm
 KHC,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1637459/000163745926000052/khc-20260805.htm
@@ -1131,7 +1130,6 @@ KHC,2026-07-27,Bylaws/Fiscal Year Change,"5.03,9.01",8-K,https://www.sec.gov/Arc
 KHC,2026-06-18,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1637459/000163745926000037/khc-20260612.htm
 KHC,2026-06-08,Investor Presentation / Reg FD Disclosure,7.01,8-K,https://www.sec.gov/Archives/edgar/data/1637459/000119312526262099/d11167d8k.htm
 KHC,2026-05-21,Material Agreement,"1.01,2.03,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1637459/000119312526234627/d101070d8k.htm
-KHC,2026-05-19,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1637459/000163745926000028/khc-20260514.htm
 KMB,2026-10-01,Executive/Board Change,5.02,FORM 8-K,https://www.sec.gov/Archives/edgar/data/55785/000110465926112571/tm2626685d1_8k.htm
 KMB,2026-09-28,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/55785/000110465926111354/tm2625576d1_8k.htm
 KMB,2026-08-04,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/55785/000162828026052113/kmb-20260804.htm
@@ -1230,6 +1228,7 @@ LOW,2026-05-20,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edg
 LRCX,2026-08-27,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/707549/000070754926000043/lrcx-20260824.htm
 LRCX,2026-07-29,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/707549/000070754926000033/lrcx-20260729.htm
 LRCX,2026-04-22,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/707549/000070754926000020/lrcx-20260422.htm
+LULU,2026-10-07,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1397187/000139718726000131/lulu-20260930.htm
 LULU,2026-09-14,Executive/Board Change,"5.02,5.03,9.01",APPOINTMENT OF HEIDI O'NEILL TO BOD & AMENDED BYLAWS,https://www.sec.gov/Archives/edgar/data/1397187/000139718726000129/lulu-20260908.htm
 LULU,2026-09-03,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1397187/000139718726000126/lulu-20260903.htm
 LULU,2026-08-13,Other Material Event,8.01,UPDATE TO LEADERSHIP TEAM,https://www.sec.gov/Archives/edgar/data/1397187/000139718726000120/lulu-20260813.htm
@@ -1237,7 +1236,6 @@ LULU,2026-06-26,Executive/Board Change,"5.02,5.07",APPOINTMENT OF LAURA GENTILE 
 LULU,2026-06-04,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1397187/000139718726000077/lulu-20260604.htm
 LULU,2026-05-27,Material Agreement,"1.01,7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1397187/000121390026061531/ea0292191-8k_lululemon.htm
 LULU,2026-04-28,Executive/Board Change,"5.02,7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1397187/000121390026048264/ea0287949-8k_lululemon.htm
-LULU,2026-04-22,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1397187/000139718726000070/lulu-20260421.htm
 LUNR,2026-08-13,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1844452/000162828026056476/lunr-20260813.htm
 LUNR,2026-08-03,Material Agreement,"1.01,7.01,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1844452/000119312526330778/d323986d8k.htm
 LUNR,2026-06-08,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1844452/000162828026041526/lunr-20260608.htm
@@ -1321,12 +1319,12 @@ MGM,2026-07-29,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edg
 MGM,2026-05-14,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/789570/000119312526224106/d134850d8k.htm
 MGM,2026-05-08,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/789570/000078957026000037/mgm-20260506.htm
 MGM,2026-04-29,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/789570/000078957026000034/mgm-20260429.htm
+MGNI,2026-10-07,Material Agreement,"1.01,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1595974/000119312526417011/d149525d8k.htm
 MGNI,2026-09-21,Executive/Board Change,"5.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1595974/000159597426000032/mgni-20260921.htm
 MGNI,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1595974/000162828026053334/mgni-20260805.htm
 MGNI,2026-06-11,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1595974/000162828026042512/mgni-20260608.htm
 MGNI,2026-05-06,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1595974/000159597426000023/mgni-20260506.htm
 MGNI,2026-04-20,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1595974/000159597426000016/mgni-20260420.htm
-MGNI,2026-04-10,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1595974/000159597426000013/mgni-20260407.htm
 MMM,2026-09-10,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/66740/000110465926106710/tm2624999d1_8k.htm
 MMM,2026-08-19,Material Agreement,"1.01,1.02,2.03",8-K,https://www.sec.gov/Archives/edgar/data/66740/000006674026000268/mmm-20260817.htm
 MMM,2026-07-21,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/66740/000006674026000242/mmm-20260721.htm
@@ -1445,6 +1443,7 @@ NOW,2026-04-22,Material Agreement,"1.01,2.02,2.03,9.01",8-K,https://www.sec.gov/
 NTAP,2026-09-11,Bylaws/Fiscal Year Change,"3.03,5.03,5.07",8-K,https://www.sec.gov/Archives/edgar/data/1002047/000119312526389273/ntap-20260909.htm
 NTAP,2026-09-02,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1002047/000100204726000003/ntap-20260902.htm
 NTAP,2026-05-28,Earnings Release,"2.02,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1002047/000119312526245196/ntap-20260521.htm
+NTNX,2026-10-07,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1618732/000119312526417007/ntnx-20261005.htm
 NTNX,2026-09-24,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1618732/000119312526400318/ntnx-20260924.htm
 NTNX,2026-08-26,Earnings Release,"2.02,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1618732/000117184326005752/f8k_082626.htm
 NTNX,2026-08-04,8-K: Other Material Event,2.05,8-K,https://www.sec.gov/Archives/edgar/data/1618732/000119312526331661/ntnx-20260804.htm
@@ -1534,7 +1533,6 @@ OXY,2026-08-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edg
 OXY,2026-07-10,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/797468/000162828026047886/oxy-20260710.htm
 OXY,2026-05-05,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/797468/000162828026030567/oxy-20260505.htm
 OXY,2026-05-04,Executive/Board Change,"5.02,5.07,7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/797468/000095015726000569/form8-k.htm
-OXY,2026-04-10,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/797468/000162828026024581/oxy-20260410.htm
 PANW,2026-09-01,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1327567/000132756726000019/panw-20260901.htm
 PANW,2026-08-21,Executive/Board Change,"5.02,5.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1327567/000119312526361122/d180372d8k.htm
 PANW,2026-06-02,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1327567/000132756726000012/panw-20260602.htm
@@ -1563,6 +1561,7 @@ PENN,2026-06-18,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/
 PENN,2026-05-28,Material Agreement,"1.01,2.03,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/921738/000110465926067476/tm2615773d1_8k.htm
 PENN,2026-04-23,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/921738/000092173826000011/penn-20260423.htm
 PENN,2026-04-16,Material Agreement,"1.01,2.03,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/921738/000110465926044358/tm2611966d1_8k.htm
+PEP,2026-10-08,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/77476/000007747626000050/pep-20261008.htm
 PEP,2026-09-17,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/77476/000007747626000042/pep-20260917.htm
 PEP,2026-07-09,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/77476/000007747626000037/pep-20260709.htm
 PEP,2026-05-22,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/77476/000110465926065758/tm2615167d1_8k.htm
@@ -1734,13 +1733,14 @@ RELY,2026-08-05,Earnings Release,"2.02,7.01,9.01",8-K,https://www.sec.gov/Archiv
 RELY,2026-06-11,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1782170/000178217026000063/rely-20260610.htm
 RELY,2026-06-08,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edgar/data/1782170/000178217026000057/rely-20260608.htm
 RELY,2026-05-06,Earnings Release,"2.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1782170/000162828026031305/rely-20260506.htm
-RELY,2026-04-10,Executive/Board Change,"5.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1782170/000178217026000031/rely-20260406.htm
+RIOT,2026-10-07,8-K: Other Material Event,"5.05,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926114374/riot-20261001x8k.htm
 RIOT,2026-09-25,8-K: Other Material Event,1.02,8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926111003/riot-20260921x8k.htm
 RIOT,2026-08-14,Material Agreement,"1.01,2.03",8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926097330/riot-20260810x8k.htm
 RIOT,2026-08-10,Earnings Release,"2.02,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926093406/riot-20260810x8k.htm
 RIOT,2026-06-15,Executive/Board Change,"5.02,5.07,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926074070/riot-20260609x8k.htm
 RIOT,2026-04-30,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926052943/riot-20260430x8k.htm
 RIOT,2026-04-27,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1167419/000110465926049432/riot-20260421x8k.htm
+RIVN,2026-10-07,8-K: Other Material Event,2.03,8-K,https://www.sec.gov/Archives/edgar/data/1874178/000187417826000061/rivn-20261007.htm
 RIVN,2026-10-02,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1874178/000187417826000057/rivn-20261002.htm
 RIVN,2026-08-27,Executive/Board Change,"5.02,7.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1874178/000110465926102435/tm2624125d1_8k.htm
 RIVN,2026-07-30,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1874178/000187417826000053/rivn-20260730.htm
@@ -1748,7 +1748,6 @@ RIVN,2026-07-09,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Ar
 RIVN,2026-07-06,Earnings Release,2.02,FORM 8-K,https://www.sec.gov/Archives/edgar/data/1874178/000110465926080813/tm2619783d1_8k.htm
 RIVN,2026-07-02,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1874178/000187417826000048/rivn-20260702.htm
 RIVN,2026-06-26,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/1874178/000187417826000045/rivn-20260622.htm
-RIVN,2026-05-04,8-K: Other Material Event,"3.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1874178/000187417826000039/rivn-20260504.htm
 RKLB,2026-09-15,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1819994/000175392626001769/g085951_8k.htm
 RKLB,2026-08-13,Investor Presentation / Reg FD Disclosure,"7.01,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1819994/000175392626001463/g085846_8k.htm
 RKLB,2026-08-13,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1819994/000175392626001454/g085841_8k.htm
@@ -2024,6 +2023,7 @@ TJX,2026-09-17,Executive/Board Change,5.02,8-K,https://www.sec.gov/Archives/edga
 TJX,2026-08-19,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/109198/000010919826000045/tjx-20260819.htm
 TJX,2026-06-11,8-K: Other Material Event,5.07,8-K,https://www.sec.gov/Archives/edgar/data/109198/000010919826000041/tjx-20260609.htm
 TJX,2026-05-20,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/109198/000010919826000023/tjx-20260520.htm
+TLRY,2026-10-08,Earnings Release,"2.02,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1731348/000117184326006527/f8k_100826.htm
 TLRY,2026-09-14,8-K: Other Material Event,3.02,8-K,https://www.sec.gov/Archives/edgar/data/1731348/000114036126036507/ef20081972_8k.htm
 TLRY,2026-08-10,8-K: Other Material Event,3.02,8-K,https://www.sec.gov/Archives/edgar/data/1731348/000114036126032052/ef20079834_8k.htm
 TLRY,2026-07-28,Earnings Release,"2.02,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1731348/000117184326004944/f8k_072826.htm
@@ -2031,7 +2031,6 @@ TLRY,2026-06-30,8-K: Other Material Event,3.02,8-K,https://www.sec.gov/Archives/
 TLRY,2026-06-09,8-K: Other Material Event,3.02,8-K,https://www.sec.gov/Archives/edgar/data/1731348/000114036126024650/ef20075844_form8k.htm
 TLRY,2026-04-21,Other Material Event,"8.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1731348/000114036126015921/ny20066669x5_8k.htm
 TLRY,2026-04-15,Material Agreement,"1.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1731348/000114036126014692/ny20066669x2_8k.htm
-TLRY,2026-04-15,8-K: Other Material Event,3.02,FORM 8-K,https://www.sec.gov/Archives/edgar/data/1731348/000114036126014638/ny20066669x3_8k.htm
 TMC,2026-09-29,Executive/Board Change,"5.02,7.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1798562/000110465926111638/tm2626232d2_8k.htm
 TMC,2026-08-19,Investor Presentation / Reg FD Disclosure,"7.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1798562/000110465926098771/tm2623371d1_8k.htm
 TMC,2026-08-17,Investor Presentation / Reg FD Disclosure,"7.01,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1798562/000110465926097581/tm2623371d1_8k.htm
@@ -2132,6 +2131,7 @@ ULTA,2026-08-17,Executive/Board Change,"5.02,8.01,9.01",8-K,https://www.sec.gov/
 ULTA,2026-07-14,Executive/Board Change,"5.02,7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1403568/000110465926083524/ulta-20260714x8k.htm
 ULTA,2026-06-09,Executive/Board Change,"5.02,5.03,5.07,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1403568/000110465926071896/ulta-20260609x8k.htm
 ULTA,2026-06-02,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1403568/000110465926069464/ulta-20260602x8k.htm
+UMAC,2026-10-07,8-K: Other Material Event,5.07,CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1956955/000168316826007699/umac_8k.htm
 UMAC,2026-08-12,Bylaws/Fiscal Year Change,"4.01,5.03,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1956955/000168316826006280/umac_8k.htm
 UMAC,2026-08-11,Investor Presentation / Reg FD Disclosure,"7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1956955/000168316826006179/umac_8k.htm
 UMAC,2026-08-06,Earnings Release,"2.02,7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1956955/000168316826006015/umac_8k.htm
@@ -2139,7 +2139,6 @@ UMAC,2026-07-28,Executive/Board Change,5.02,FORM 8-K,https://www.sec.gov/Archive
 UMAC,2026-06-25,Material Agreement,"1.01,7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1956955/000168316826005100/umac_8k.htm
 UMAC,2026-05-29,Other Material Event,8.01,FORM 8-K,https://www.sec.gov/Archives/edgar/data/1956955/000168316826004358/umac_8k.htm
 UMAC,2026-05-26,Investor Presentation / Reg FD Disclosure,"7.01,9.01",CURRENT REPORT,https://www.sec.gov/Archives/edgar/data/1956955/000168316826004300/umac_8k.htm
-UMAC,2026-05-14,Earnings Release,"2.02,9.01",FORM 8-K,https://www.sec.gov/Archives/edgar/data/1956955/000168316826003912/umac_8k.htm
 UMBF,2026-09-01,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/101382/000119312526378379/umbf-20260901.htm
 UMBF,2026-07-28,Earnings Release,"2.02,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/101382/000119312526320980/umbf-20260728.htm
 UMBF,2026-04-30,8-K: Other Material Event,"5.07,9.01",8-K,https://www.sec.gov/Archives/edgar/data/101382/000119312526197753/umbf-20260428.htm
@@ -2202,6 +2201,7 @@ V,2026-06-26,Other Material Event,8.01,8-K,https://www.sec.gov/Archives/edgar/da
 V,2026-05-12,Material Agreement,"1.01,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1403161/000119312526219432/d64238d8k.htm
 V,2026-05-11,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1403161/000119312526215875/d59695d8k.htm
 V,2026-04-28,Earnings Release,"2.02,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1403161/000140316126000077/v-20260428.htm
+VG,2026-10-08,Investor Presentation / Reg FD Disclosure,"7.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000072/vg-20261007.htm
 VG,2026-10-07,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000069/vg-20261007.htm
 VG,2026-09-02,Material Agreement,"1.01,2.03,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000066/vg-20260902.htm
 VG,2026-08-11,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000063/vg-20260811.htm
@@ -2209,7 +2209,6 @@ VG,2026-07-08,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edga
 VG,2026-06-26,Material Agreement,"1.01,2.03,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000055/vg-20260626.htm
 VG,2026-06-11,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000051/vg-20260611.htm
 VG,2026-06-02,Other Material Event,"2.04,8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/2007855/000200785526000048/vg-20260601.htm
-VG,2026-06-01,Executive/Board Change,5.02,FORM 8-K,https://www.sec.gov/Archives/edgar/data/2007855/000095010326008083/dp247403_8k.htm
 VKTX,2026-09-28,Material Agreement,"1.01,2.03,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1607678/000119312526405580/vktx-20260923.htm
 VKTX,2026-09-22,Other Material Event,"8.01,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1607678/000119312526397219/vktx-20260922.htm
 VKTX,2026-07-29,Earnings Release,"2.02,9.01",8-K,https://www.sec.gov/Archives/edgar/data/1607678/000119312526323652/vktx-20260729.htm
